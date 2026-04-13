@@ -1,0 +1,58 @@
+# ==================== 模型配置文件 ====================
+# 用于配置不同 Agent 使用的模型及其参数
+
+# ==================== 全局配置 ====================
+global:
+  api_key: "my-secret-key"
+  api_timeout: 120
+  media_base_url: "http://192.168.8.17:8866"
+
+  # 视频/图像参数
+  video_max_pixels:  32*32*160  # 32*32*160
+  image_max_pixels: 64*64    # 64*64
+  video_fps: 1.0
+  max_video_count: 4
+
+# ==================== 模型定义 ====================
+models:
+  # Qwen-VL 模型 - 支持视觉和文本任务
+  qwen_vl:
+    name: "qwen3vl_235b_2507"
+    base_url: "http://192.168.8.17:9011/v1"
+    type: "vision"
+    default_params:
+      temperature: 0.7
+      max_tokens: 4096
+      extra_body:
+        mm_processor_kwargs:
+          fps: 1
+          do_sample_frames: true
+
+# ==================== Agent 模型映射 ====================
+# 为每个 Agent 指定使用的模型
+# 格式: agent_name: model_key
+agent_models:
+  # 纯文本类 Agent (使用 Qwen-VL)
+  triage: qwen_vl
+  time_calc: qwen_vl
+  thrombolysis: qwen_vl
+  indication: qwen_vl
+  thrombectomy: qwen_vl
+  summary: qwen_vl
+  nihss_scorer: qwen_vl
+  fact_extractor: qwen_vl
+  consistency_check: qwen_vl
+  director: qwen_vl
+
+  # 视觉类 Agent (使用 Qwen-VL)
+  hemorrhage: qwen_vl
+  ncct_imaging: qwen_vl
+  aneurysm: qwen_vl
+  lvo: qwen_vl
+  cta_imaging: qwen_vl
+  ctp_imaging: qwen_vl
+  imaging: qwen_vl
+
+# ==================== 默认模型 ====================
+# 如果 Agent 未在上面配置，则使用此默认模型
+default_model: qwen_vl

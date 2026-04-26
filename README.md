@@ -206,15 +206,22 @@ agent/
 
 ---
 
+## Associated Paper
+
+This repository contains the official implementation for our paper:
+
+**"A Multi-Agent MLLM Framework for Imaging-Grounded Treatment Recommendation in Acute Ischemic Stroke"**
+
+> If you use this code in your research, please cite our paper.
+
 ## Citation
 
-If you use this system in your research, please cite:
-
 ```bibtex
-@software{stroke_cdss_2024,
-  title = {Stroke-CDSS: Acute Ischemic Stroke Clinical Decision Support System},
-  author = {Your Name},
-  year = {2024},
+@article{stroke_cdss_2025,
+  title = {A Multi-Agent MLLM Framework for Imaging-Grounded Treatment Recommendation in Acute Ischemic Stroke},
+  author = {},
+  journal = {},
+  year = {2025},
   url = {https://github.com/lz-code-2844/Stroke-CDSS}
 }
 ```

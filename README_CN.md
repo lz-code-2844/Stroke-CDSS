@@ -206,15 +206,22 @@ agent/
 
 ---
 
+## 相关论文
+
+本仓库是以下论文的官方代码实现：
+
+**"A Multi-Agent MLLM Framework for Imaging-Grounded Treatment Recommendation in Acute Ischemic Stroke"**
+
+> 如果您在研究中使用本代码，请引用我们的论文。
+
 ## 引用
 
-如果您在研究中使用本系统，请引用：
-
 ```bibtex
-@software{stroke_cdss_2024,
-  title = {Stroke-CDSS: Acute Ischemic Stroke Clinical Decision Support System},
-  author = {Your Name},
-  year = {2024},
+@article{stroke_cdss_2025,
+  title = {A Multi-Agent MLLM Framework for Imaging-Grounded Treatment Recommendation in Acute Ischemic Stroke},
+  author = {},
+  journal = {},
+  year = {2025},
   url = {https://github.com/lz-code-2844/Stroke-CDSS}
 }
 ```

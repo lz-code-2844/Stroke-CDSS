@@ -27,7 +27,7 @@ A multi-agent architecture-based stroke treatment decision support system for in
 │  ├── 07a_ncct_imaging_agent NCCT Imaging Analysis                 │
 │  ├── 07b_cta_imaging_agent  CTA Imaging Analysis                  │
 │  ├── 07c_ctp_imaging_agent  CTP Imaging Analysis                  │
-│  ├── 07_imaging_agent       Imaging Validation                    │
+│  ├── 07_imaging_agent       Imaging Integration                   │
 │  ├── 08_indication_agent    Thrombectomy Indication Screening     │
 │  ├── 09_thrombectomy_agent  Thrombectomy Decision                 │
 │  ├── 10_summary_agent       Summary Generation                    │

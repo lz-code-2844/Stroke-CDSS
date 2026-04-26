@@ -27,7 +27,7 @@
 │  ├── 07a_ncct_imaging_agent NCCT影像分析                          │
 │  ├── 07b_cta_imaging_agent  CTA影像分析                           │
 │  ├── 07c_ctp_imaging_agent  CTP影像分析                           │
-│  ├── 07_imaging_agent       影像综合校验                          │
+│  ├── 07_imaging_agent       影像综合整合                          │
 │  ├── 08_indication_agent    取栓指征筛查                          │
 │  ├── 09_thrombectomy_agent  取栓决策                              │
 │  ├── 10_summary_agent       总结生成                              │

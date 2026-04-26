@@ -31,6 +31,4 @@ EXCEL_COL_MAPPING = {
     # --- 辅助时间源 ---
     "time_calc_source": "主诉信息",
 
-    # --- 真实检查报告（金标准）---
-    "imaging_report": "检查报告"       # 包含NCCT/CTA/CTP的真实报告文本
 }

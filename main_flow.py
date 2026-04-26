@@ -94,7 +94,7 @@ def get_agents():
         'ncct_imaging': ReActClinicalAgent(f"{ROOT_DIR}/prompts/07a_ncct_imaging_agent.md"),
         'cta_imaging': ReActClinicalAgent(f"{ROOT_DIR}/prompts/07b_cta_imaging_agent.md"),
         'ctp_imaging': ReActClinicalAgent(f"{ROOT_DIR}/prompts/07c_ctp_imaging_agent.md"),
-        'imaging_validation': ReActClinicalAgent(f"{ROOT_DIR}/prompts/07_imaging_agent.md"),  # [新增] 基于真实报告校验影像分析
+        'imaging_validation': ReActClinicalAgent(f"{ROOT_DIR}/prompts/07_imaging_agent.md"),  # 影像综合整合
         'nihss_scorer': ReActClinicalAgent(f"{ROOT_DIR}/prompts/11_nihss_scorer.md"),
         'fact_extractor': ReActClinicalAgent(f"{ROOT_DIR}/prompts/12_fact_extractor.md"),
         'consistency_check': ReActClinicalAgent(f"{ROOT_DIR}/prompts/13_consistency_check.md"),
@@ -277,9 +277,8 @@ def build_agent_context(row_data, agent_name, previous_outputs=None):
         ctx['ctp_tool_raw'] = row_data.get('ctp_tool_raw', 'N/A')
         ctx['ctp_tool_findings'] = row_data.get('ctp_tool_findings', '无记录')
 
-    # === [新增] 影像校验Agent: 基于真实检查报告进行校验 ===
+    # === 影像综合整合Agent: 整合07a/07b/07c结论 ===
     elif agent_name == 'imaging_validation':
-        ctx['imaging_report'] = row_data.get('imaging_report', '无检查报告')
         ctx['ncct_result'] = previous_outputs.get('ncct_imaging', 'NCCT分析未执行')
         ctx['cta_result'] = previous_outputs.get('cta_imaging', 'CTA分析未执行')
         ctx['ctp_result'] = previous_outputs.get('ctp_imaging', 'CTP分析未执行')
@@ -325,7 +324,7 @@ def build_agent_context(row_data, agent_name, previous_outputs=None):
 
         # [新增] 传递一致性检查结果给Director
         ctx['consistency_check_result'] = previous_outputs.get('consistency_check', '未执行一致性检查')
-        ctx['imaging_validation_result'] = previous_outputs.get('imaging_validation', '未执行影像校验')  # [新增] 校验后影像结论
+        ctx['imaging_validation_result'] = previous_outputs.get('imaging_validation', '未执行影像整合')  # 影像综合整合结论
 
         ctx['cta_tool_raw'] = row_data.get('cta_tool_raw', 'N/A')
         ctx['is_in_ivt_window'] = previous_outputs.get('is_in_ivt_window', '否')
@@ -622,16 +621,15 @@ def process_single_patient(row_data_dict, case_index, total_cases, detailed_logs
             log['Res_05_LVO'] = lvo_out
             previous_outputs['lvo'] = lvo_out
 
-            # [新增] 基于真实检查报告进行影像校验
-            logger.info("   ▶ Sub-Step: Imaging Validation against Real Report...")
+            # 影像综合整合
+            logger.info("   ▶ Sub-Step: Imaging Integration...")
             ctx_validation = build_agent_context(raw_data, 'imaging_validation', previous_outputs)
             validation_out = agent_call_with_log('imaging_validation', agents['imaging_validation'], get_video_paths_for_agent('imaging_validation', all_video_paths), ctx_validation, workflow_record["agent_step_records"], logger)
-            log['Res_07d_Validation'] = validation_out
+            log['Res_07d_Integration'] = validation_out
             previous_outputs['imaging_validation'] = validation_out
 
-            # 使用校验后的结果替换原始结果
-            # 后续agent将使用纠正后的结论
-            vlm_findings = f"【出血】:{h_out}\n【NCCT】:{ncct_out}\n【CTP】:{ctp_out}\n【CTA】:{cta_out}\n【LVO】:{lvo_out}\n【校验后结论】:{validation_out}"
+            # 整合各影像Agent结论
+            vlm_findings = f"【出血】:{h_out}\n【NCCT】:{ncct_out}\n【CTP】:{ctp_out}\n【CTA】:{cta_out}\n【LVO】:{lvo_out}\n【影像综合结论】:{validation_out}"
             previous_outputs['vlm_findings'] = vlm_findings
             log['Res_07_Imaging_Summary'] = vlm_findings[:3000]
 

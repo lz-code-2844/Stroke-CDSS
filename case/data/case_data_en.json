@@ -1,0 +1,33 @@
+{
+  "patient_id": "xxxxx",
+  "patient_info": {
+    "sex": "female",
+    "age": "76 years",
+    "imaging_id": "xxxxx",
+    "exam_date": "2024-12-16",
+    "prestroke_mRS": "0",
+    "discharge_mRS": "4.0",
+    "NIHSS_on_admission": "",
+    "NIHSS_after_treatment": "nan",
+    "NIHSS_7_days_after_onset": "",
+    "NIHSS_at_discharge": "",
+    "treatment_label": "endovascular thrombectomy",
+    "treatment_single_label": "B"
+  },
+  "admission_record": "Sex: female. Age: 76 years. Marital status: married. Admission date and first-contact details are provided in the original case record. The patient presented with acute left-sided limb weakness and slurred speech for 19 hours. Neurologic deficit was clinically compatible with right hemispheric ischemia. No intracranial hemorrhage was identified. The case was ultimately labeled as endovascular thrombectomy because imaging showed a right M1 large-vessel occlusion with favorable tissue profile.",
+  "neuro_exam": "Neurologic examination showed left-sided limb weakness and language disturbance/slurred speech, with NIHSS approximately 8-9 in the model outputs. The clinical syndrome was consistent with right MCA territory involvement.",
+  "chief_complaint": "Left-sided limb weakness with slurred speech for 19 hours.",
+  "fact_content": "Key facts: 76-year-old woman, acute ischemic stroke presentation, onset approximately 19 hours earlier, no hemorrhagic contraindication, right M1 large-vessel occlusion, small ischemic core (2.8 ml), large penumbra (84.2 ml), mismatch ratio 31.4, ASPECTS 10.0, clinical-imaging concordance. Gold treatment label: B, endovascular thrombectomy.",
+  "imaging_report": "CTA/CTP synthesis: right M1 segment large-vessel occlusion with a favorable perfusion profile. Ischemic core approximately 2.8 ml, penumbra approximately 84.2 ml, mismatch ratio 31.4, ASPECTS 10.0. No intracranial hemorrhage. The findings support extended-window EVT assessment and thrombectomy eligibility.",
+  "tool_outputs": {
+    "ncct_aspects": "10.0",
+    "cta_tool": "{\"case_num\": \"T20260205143129H01aa8d1b\", \"other\": {\"willis\": [], \"origin_variations\": {}}, \"vessels\": {\"BCT\": {\"BCT\": []}, \"AOAR\": {\"AOAR\": []}, \"L-SA\": {\"L-SA\": []}, \"R-SA\": {\"R-SA\": []}, \"BA\": {\"BA\": []}, \"L-CCA\": {\"L-CCA\": []}, \"R-CCA\": {\"R-CCA\": []}, \"L-VA\": {\"V1\": [], \"V2\": [], \"V3\": [], \"V4\": []}, \"R-VA\": {\"V1\": [], \"V2\": [], \"V3\": [], \"V4\": []}, \"L-PCA\": {\"P1\": [], \"P2\": [], \"dP\": []}, \"R-PCA\": {\"P1\": [], \"P2\": [], \"dP\": []}, \"L-MCA\": {\"M1\": [], \"M2\": [], \"dM\": []}, \"R-MCA\": {\"M1\": [], \"M2\": [], \"dM\": []}, \"L-ACA\": {\"A1\": [], \"A2\": [], \"dA\": []}, \"R-ACA\": {\"A1\": [], \"A2\": [], \"dA\": []}, \"L-ICA\": {\"C1\": [], \"C2\": [], \"C3\": [], \"C4\": [], \"C5\": [], \"C6\": [], \"C7\": []}, \"R-ICA\": {\"C1\": [], \"C2\": [], \"C3\": [], \"C4\": [], \"C5\": [], \"C6\": [], \"C7\": []}, \"L-PComA\": {\"L-PComA\": []}, \"R-PComA\": {\"R-PComA\": []}, \"AComA\": {\"AComA\": []}}, \"is_order\": true, \"vessel_summary\": {}, \"text\": {\"type\": null, \"description\": null, \"impression\": \"<div>Findings:</div><br><div>Interior Carotid Artery (ICA)</div><div>There is no significant stenosis.</div><br><div>Vertebral Artery (VA)</div><div>There is no significant stenosis.</div><br><div>Subclavian Artery (SA)</div><div>There is no significant stenosis.</div><br><div>Anterior Cerebral Artery (ACA)</div><div>There is no significant stenosis.</div><br><div>Middle Cerebral Artery (MCA)</div><div>There is no significant stenosis.</div><br><div>Posterior Cerebral Artery (PCA)</div><div>There is no significant stenosis.</div><br><div>This is no variant in circle of willis.</div>\", \"lng\": \"en\"}}",
+    "ctp_tool": "CBF<30% volume=2.8 ml；Tmax>6s volume=86.9 ml；Mismatch volume=84.2 ml；Mismatch ratio=31.4",
+    "cta_findings": "Findings:\nInterior Carotid Artery (ICA)There is no significant stenosis.\nVertebral Artery (VA)There is no significant stenosis.\nSubclavian Artery (SA)There is no significant stenosis.\nAnterior Cerebral Artery (ACA)There is no significant stenosis.\nMiddle Cerebral Artery (MCA)There is no significant stenosis.\nPosterior Cerebral Artery (PCA)There is no significant stenosis.\nThis is no variant in circle of willis."
+  },
+  "video_files": {
+    "ncct": "videos/ncct.mp4",
+    "cta_merge": "videos/cta_merge.mp4",
+    "ctp_merge": "videos/ctp_merge.mp4"
+  }
+}

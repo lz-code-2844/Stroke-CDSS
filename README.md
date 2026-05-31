@@ -144,17 +144,6 @@ graph TD
 
 ---
 
-## Treatment Path Classification
-
-| Path | Description | Applicable Scenario |
-|-----|------|---------|
-| **A** | Thrombolysis Therapy (IVT) | Within 4.5h, no LVO or not eligible for thrombectomy |
-| **B** | Thrombectomy Therapy (EVT) | With LVO and eligible for thrombectomy, bridge or standalone |
-| **C** | Conservative Treatment | Beyond time window, contraindications, or non-ischemic stroke |
-| **D** | Other Diseases / Hemorrhage Treatment | Non-stroke etiology or hemorrhage detected by screening |
-
----
-
 ## Project Structure
 
 ```

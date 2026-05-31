@@ -3,77 +3,111 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**Acute Ischemic Stroke Clinical Decision Support System** (急性缺血性卒中临床决策支持系统)
+**A Multi-Agent MLLM Framework for Imaging-Grounded Treatment Recommendation in Acute Ischemic Stroke**
 
 [中文](README_CN.md) | English
 
-A multi-agent architecture-based stroke treatment decision support system for intelligent recommendation of Intravenous Thrombolysis (IVT) and Endovascular Thrombectomy (EVT), strictly following the Chinese Guidelines for the Diagnosis and Treatment of Acute Ischemic Stroke and Chinese Guidelines for Neuroimaging in Cerebrovascular Disease.
+Stroke-CDSS is a research implementation of an MDT-inspired multi-agent framework for acute ischemic stroke (AIS) treatment decision support. It integrates clinical records, multimodal CT imaging, specialist-style task decomposition, cross-checking, and retrieval-augmented reasoning to generate traceable recommendations for IVT, EVT, medical management, and non-AIS/hemorrhage pathways.
+
+This repository accompanies the paper **"A Multi-Agent MLLM Framework for Imaging-Grounded Treatment Recommendation in Acute Ischemic Stroke"**.
 
 ---
 
-## System Architecture
+## Framework Overview
 
+The system follows the emergency AIS decision workflow: triage, time-window assessment, hemorrhage safety routing, multimodal imaging interpretation, risk/contraindication screening, consistency checking, and final treatment recommendation.
+
+```mermaid
+flowchart LR
+    A[Clinical records] --> S[Supervisor workflow]
+    B[NCCT / CTA / CTP videos] --> S
+    C[RAG knowledge bases] --> S
+
+    S --> T[Triage Agent]
+    S --> W[Time-calculation Agent]
+    S --> H[Hemorrhage safety-routing Agent]
+    S --> I[Imaging Agent]
+    S --> N[NIHSS Agent]
+    S --> F[Fact-extractor Agent]
+    S --> R[Contraindication Agent]
+    S --> Ck[Consistency Agent]
+
+    T --> D[Decision-physician Agent]
+    W --> D
+    H --> D
+    I --> D
+    N --> D
+    F --> D
+    R --> D
+    Ck --> D
+    D --> O[Structured treatment recommendation]
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Stroke-CDSS v6.0                          │
-├─────────────────────────────────────────────────────────────────┤
-│  Agent Layer (14 Specialized Agents)                              │
-│  ├── 01_triage_agent      Triage Screening                        │
-│  ├── 02_hemorrhage_agent  Hemorrhage Detection                    │
-│  ├── 03_time_calc_agent   Time Window Calculation                 │
-│  ├── 04_aneurysm_agent    Aneurysm Detection                      │
-│  ├── 05_lvo_agent         Large Vessel Occlusion Screening        │
-│  ├── 06_thrombolysis_agent Thrombolysis Decision                  │
-│  ├── 07a_ncct_imaging_agent NCCT Imaging Analysis                 │
-│  ├── 07b_cta_imaging_agent  CTA Imaging Analysis                  │
-│  ├── 07c_ctp_imaging_agent  CTP Imaging Analysis                  │
-│  ├── 07_imaging_agent       Imaging Integration                   │
-│  ├── 08_indication_agent    Thrombectomy Indication Screening     │
-│  ├── 09_thrombectomy_agent  Thrombectomy Decision                 │
-│  ├── 10_summary_agent       Summary Generation                    │
-│  ├── 11_nihss_scorer        NIHSS Scoring                         │
-│  ├── 12_fact_extractor      Fact Extraction                       │
-│  ├── 13_consistency_check   Consistency Check                     │
-│  └── 14_director_agent      Director Decision                     │
-├─────────────────────────────────────────────────────────────────┤
-│  RAG Layer (Hybrid Retrieval Augmentation)                        │
-│  ├── Semantic Retrieval   Semantic Search (Sentence-Transformers) │
-│  ├── BM25 Retrieval       Keyword Search                          │
-│  └── Reranking            Cross-encoder Reranking                 │
-├─────────────────────────────────────────────────────────────────┤
-│  LLM Layer (Configurable Multi-Model)                             │
-│  ├── Vision Models        Qwen-VL etc. (Imaging Analysis)         │
-│  └── Text Models          GPT-OSS etc. (Text Decision)            │
-└─────────────────────────────────────────────────────────────────┘
-```
+
+The **Supervisor Agent** is implemented by `main_flow.py`. The **Imaging Agent** is implemented as modality-specific submodules for NCCT, CTA, CTP, and imaging integration.
+
+---
+
+## Paper-to-Code Agent Mapping
+
+| Paper-level agent | Main implementation | Role |
+|---|---|---|
+| Triage Agent | `prompts/01_triage_agent.md` | Routes suspected stroke cases into AIS/non-AIS pathways |
+| Time-calculation Agent | `prompts/03_time_calc_agent.md` | Determines IVT and EVT time-window eligibility |
+| Hemorrhage safety-routing Agent | `prompts/02_hemorrhage_agent.md` | Screens NCCT for hemorrhage and routes hemorrhagic cases away from reperfusion decisions |
+| Imaging Agent | `prompts/05_lvo_agent.md`, `07a_*`, `07b_*`, `07c_*`, `07_imaging_agent.md` | Evaluates hemorrhage, LVO, perfusion, and lesion features across NCCT/CTA/CTP |
+| NIHSS Agent | `prompts/11_nihss_scorer.md` | Estimates neurological severity |
+| Contraindication Agent | `prompts/08_indication_agent.md` | Screens treatment-related risks and contraindications |
+| Fact-extractor Agent | `prompts/12_fact_extractor.md` | Standardizes key variables from free-text clinical records |
+| Consistency Agent | `prompts/13_consistency_check.md` | Checks clinical-imaging concordance and flags mismatches |
+| Supervisor Agent | `main_flow.py` | Coordinates routing, shared state, and pathway transitions |
+| Decision-physician Agent | `prompts/14_director_agent.md` | Produces the final management recommendation |
+
+Additional prompt templates retained under `prompts/` are historical or optional submodules used during framework development and ablation experiments.
 
 ---
 
 ## Key Features
 
-- **ReAct Reasoning Pattern**: Each agent adopts a three-stage "Reasoning-Action-Self-Check" decision process with strong interpretability
-- **Hybrid Retrieval RAG**: Semantic retrieval + BM25 + reranking, integrating PubMed literature and clinical guidelines
-- **Multi-modal Fusion**: Supports joint analysis of text medical records and CT/CTA/CTP imaging
-- **Time Window Priority**: Strictly follows clinical standards of 4.5h thrombolysis window and 24h thrombectomy window
-- **Parallel Processing**: Supports multi-process parallel processing for large-scale patient data
-- **Configuration-Driven**: YAML configuration file for flexible switching between different LLM models
+- **MDT-inspired task decomposition**: decomposes emergency AIS decisions into specialized, auditable subtasks.
+- **Imaging-grounded reasoning**: supports NCCT, CTA, and CTP video inputs for hemorrhage screening, LVO detection, and perfusion assessment.
+- **ReAct-style agent execution**: each agent follows a reasoning, action, and self-check pattern.
+- **Hybrid RAG support**: combines semantic retrieval, BM25, and reranking over task-oriented AIS knowledge bases.
+- **Traceable workflow records**: saves intermediate agent outputs, parsed decisions, final recommendations, and detailed logs.
+- **Configurable model routing**: assigns text and vision models to different agents through YAML configuration.
+
+---
+
+## Decision Flow
+
+```mermaid
+graph TD
+    A[Patient data] --> B{Triage screening}
+    B -->|Non-stroke / non-AIS| D[Non-AIS pathway]
+    B -->|Suspected AIS| C{Hemorrhage screening}
+    C -->|Hemorrhage| D2[Hemorrhage / non-AIS pathway]
+    C -->|No hemorrhage| F{Time-window assessment}
+    F -->|Outside reperfusion window| M[Medical management]
+    F -->|Within IVT window| I{LVO assessment}
+    F -->|Within EVT window| J{Multimodal imaging evaluation}
+    I -->|No LVO| V[IVT recommendation]
+    I -->|LVO| R{Contraindication and indication screening}
+    J -->|Not eligible| M
+    J -->|Eligible| R
+    R -->|EVT eligible| E[EVT / bridging recommendation]
+    R -->|EVT not eligible| V
+```
 
 ---
 
 ## Quick Start
 
-### 1. Install Dependencies
+### 1. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Or install manually:
-```bash
-pip install pandas openpyxl openai numpy scikit-learn sentence-transformers pyyaml
-```
-
-### 2. Configure Models
+### 2. Configure models
 
 Edit `config/model_config.yaml`:
 
@@ -83,123 +117,77 @@ global:
   api_timeout: 120
 
 models:
-  gpt_oss:
-    name: "your-model-name"
-    base_url: "http://your-api-endpoint/v1"
+  text_model:
+    name: "your-text-model"
+    base_url: "http://your-text-endpoint/v1"
     type: "text"
-  qwen_vl:
-    name: "qwen3vl_235b_2507"
+  vision_model:
+    name: "your-vision-model"
     base_url: "http://your-vision-endpoint/v1"
     type: "vision"
 
 agent_models:
-  triage: gpt_oss
-  hemorrhage: qwen_vl
-  # ... assign models for each agent
+  triage: text_model
+  hemorrhage: vision_model
+  ncct_imaging: vision_model
+  cta_imaging: vision_model
+  ctp_imaging: vision_model
+  director: text_model
 ```
 
-### 3. Build RAG Knowledge Base
+### 3. Build RAG knowledge bases
 
 ```bash
-# Build Hybrid Retrieval RAG (Recommended)
+# Hybrid retrieval RAG
 python build_hybrid_rag.py --excel data/literature.xlsx
 
-# Or build single knowledge base (Low memory mode)
+# Single knowledge-base mode
 python build_single_kb.py --kb thrombolysis
 ```
 
-### 4. Run Decision Flow
+### 4. Run the workflow
 
-```python
-from main_flow import process_patient
+```bash
+# Run all configured cases
+python main_flow.py --workers 4 --output results/final_results.xlsx
 
-result = process_patient(
-    patient_id="P001",
-    data_row=patient_data,
-    output_dir="./results"
-)
+# Run one patient by row index or patient_id
+python main_flow.py --single 0
 ```
 
----
-
-## Decision Flow
-
-```mermaid
-graph TD
-    A[Patient Data] --> B{Triage Screening}
-    B -->|Stroke| C{Hemorrhage Screening}
-    B -->|Non-Stroke| D[Path D: Other Diseases / Hemorrhage Treatment]
-    C -->|Hemorrhage| D
-    C -->|Ischemic| F{Time Window Calc}
-    F -->|>24h| H[Path C: Conservative]
-    F -->|≤4.5h| I{LVO Screening}
-    F -->|4.5-24h| J{Imaging Evaluation}
-    I -->|No LVO| K[Path A: Thrombolysis]
-    I -->|LVO| L{Thrombectomy Indication}
-    J -->|Not Eligible| H
-    J -->|Eligible| L
-    L -->|Eligible| M[Path B: Thrombectomy/Bridge]
-    L -->|Not Eligible| K
-```
+Input and output paths are configured in `main_flow.py`. Model routing is configured in `config/model_config.yaml`.
 
 ---
 
 ## Project Structure
 
-```
+```text
 agent/
-├── main_flow.py                 # Main entry point
-├── build_hybrid_rag.py          # Build hybrid retrieval RAG
-├── build_single_kb.py           # Build single knowledge base
-│
+├── main_flow.py                 # Supervisor workflow and conditional routing
 ├── agents/
-│   └── react_agent.py           # ReAct Agent core class
-│
-├── rag/
-│   ├── simple_coordinator.py    # TF-IDF retrieval
-│   ├── hybrid_coordinator.py    # Hybrid retrieval (Semantic+BM25)
-│   └── knowledge_bases/         # 4 specialized knowledge bases
-│       ├── thrombolysis_kb.py
-│       ├── thrombectomy_kb.py
-│       ├── imaging_triage_kb.py
-│       └── imaging_scoring_kb.py
-│
-├── utils/
-│   ├── llm_client.py            # LLM client wrapper
-│   ├── data_loader.py           # Excel data loader
-│   ├── prompt_parser.py         # Prompt parser
-│   └── rag_engine.py            # Guideline RAG
-│
-├── config/
-│   ├── model_config.yaml        # Model configuration file
-│   └── model_config_loader.py   # Config loader
-│
-├── prompts/                     # 14 Agent prompt templates
-│   ├── 01_triage_agent.md
-│   ├── 02_hemorrhage_agent.md
-│   └── ...
-│
-└── knowledge_base/guidelines/   # Clinical guidelines
-    ├── ivt_guidelines.txt       # IVT guidelines
-    └── evt_guidelines.txt       # EVT guidelines
+│   └── react_agent.py           # ReAct-style agent executor
+├── prompts/                     # Prompt templates for runtime and optional agents
+├── prompts_en/                  # English prompt templates
+├── rag/                         # Hybrid and task-specific RAG modules
+├── knowledge_base/
+│   ├── excel/                   # Structured task-oriented knowledge bases
+│   └── guidelines/              # Guideline notes and corpus documentation
+├── utils/                       # Data loading, LLM client, prompt parsing, RAG helpers
+├── config/                      # Model configuration
+├── case/                        # Demo data, videos, and result examples
+└── docs/                        # Configuration documentation
 ```
 
 ---
 
-## Configuration Documentation
+## Documentation
 
 - [Model Configuration Guide](docs/MODEL_CONFIG_GUIDE.md)
 - [Model Configuration Quick Start](docs/MODEL_CONFIG_QUICKSTART.md)
+- [Case Demo](case/README.md)
+- [Prompt Mapping](prompts/README.md)
 
 ---
-
-## Associated Paper
-
-This repository contains the official implementation for our paper:
-
-**"A Multi-Agent MLLM Framework for Imaging-Grounded Treatment Recommendation in Acute Ischemic Stroke"**
-
-> If you use this code in your research, please cite our paper.
 
 ## Citation
 
@@ -217,7 +205,7 @@ This repository contains the official implementation for our paper:
 
 ## Disclaimer
 
-This system is for research and auxiliary decision-making purposes only, **and cannot replace the clinical judgment of professional doctors**. All treatment decisions should be made by qualified clinicians based on the specific condition of each patient.
+This system is for research and auxiliary decision-making only. It cannot replace professional clinical judgment, and all treatment decisions must be made by qualified clinicians based on the full clinical context.
 
 ---
 

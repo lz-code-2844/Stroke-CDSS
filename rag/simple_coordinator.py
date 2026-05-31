@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-简化版 RAG 协调器（兼容版本）
+Simplified RAG Coordinator (Compatible Version)
 
-支持两种模式：
-1. 完整版：使用ChromaDB + Embedding模型
-2. 简化版：使用TF-IDF + Pickle（无需安装ChromaDB）
+Supports two modes:
+1. Full version: Uses ChromaDB + Embedding model
+2. Simplified version: Uses TF-IDF + Pickle (no ChromaDB required)
 """
 
 import os
@@ -14,9 +14,9 @@ from typing import Dict, Optional, List
 
 
 class SimpleRAGCoordinator:
-    """简化版RAG协调器（使用TF-IDF，不依赖ChromaDB）"""
+    """Simplified RAG Coordinator (using TF-IDF, no ChromaDB dependency)"""
 
-    # Agent到知识库的映射关系
+    # Agent-to-knowledge-base mapping
     AGENT_KB_MAPPING = {
         'thrombectomy': 'thrombectomy_literature',
         'thrombectomy_agent': 'thrombectomy_literature',
@@ -34,18 +34,18 @@ class SimpleRAGCoordinator:
     }
 
     def __init__(self, persist_dir="knowledge_base/simple_rag"):
-        """初始化简化版RAG协调器"""
+        """Initialize simplified RAG coordinator"""
         self.persist_dir = persist_dir
         self.vectorizer = None
         self.literature_db = {}
 
-        # 加载vectorizer
+        # Load vectorizer
         vectorizer_path = os.path.join(persist_dir, 'vectorizer.pkl')
         if os.path.exists(vectorizer_path):
             with open(vectorizer_path, 'rb') as f:
                 self.vectorizer = pickle.load(f)
 
-        # 加载所有collection
+        # Load all collections
         for coll_name in ['thrombectomy_literature', 'thrombolysis_literature',
                           'imaging_triage_literature', 'imaging_scoring_literature']:
             coll_file = os.path.join(persist_dir, f'{coll_name}.pkl')
@@ -56,24 +56,24 @@ class SimpleRAGCoordinator:
         print(f"✓ SimpleRAGCoordinator initialized with {len(self.literature_db)} knowledge bases")
 
     def retrieve(self, agent_name: str, context: Dict, top_k: int = 3) -> Optional[str]:
-        """为指定Agent检索相关文献"""
-        # 根据Agent名称确定使用哪个知识库
+        """Retrieve relevant literature for specified Agent"""
+        # Determine which knowledge base to use based on Agent name
         collection_name = self.AGENT_KB_MAPPING.get(agent_name)
 
         if collection_name is None or collection_name not in self.literature_db:
             return None
 
-        # 构建查询
+        # Build query
         query = self._build_query(agent_name, context)
 
-        # 执行检索
+        # Execute retrieval
         results = self._search(collection_name, query, top_k)
 
-        # 格式化结果
+        # Format results
         return self._format_results(results, agent_name)
 
     def _build_query(self, agent_name: str, context: Dict) -> str:
-        """根据Agent类型和上下文构建查询"""
+        """Build query based on Agent type and context"""
         query_parts = []
 
         if 'thrombectomy' in agent_name:
@@ -99,7 +99,7 @@ class SimpleRAGCoordinator:
         return " ".join(query_parts) if query_parts else "acute ischemic stroke"
 
     def _search(self, collection_name: str, query: str, top_k: int) -> List[Dict]:
-        """执行检索"""
+        """Execute retrieval"""
         if not self.vectorizer or collection_name not in self.literature_db:
             return []
 
@@ -108,13 +108,13 @@ class SimpleRAGCoordinator:
 
         coll_data = self.literature_db[collection_name]
 
-        # 向量化查询
+        # Vectorize query
         query_vec = self.vectorizer.transform([query])
 
-        # 计算相似度
+        # Compute similarity
         similarities = cosine_similarity(query_vec, coll_data['vectors'])[0]
 
-        # 获取top-k
+        # Get top-k
         top_indices = np.argsort(similarities)[-top_k:][::-1]
 
         results = []
@@ -128,21 +128,21 @@ class SimpleRAGCoordinator:
         return results
 
     def _format_results(self, results: List[Dict], agent_name: str) -> str:
-        """格式化检索结果"""
+        """Format retrieval results"""
         if not results:
-            return f"【文献检索】\n未找到相关文献。"
+            return f"[Literature Search]\nNo relevant literature found."
 
         kb_type_names = {
-            'thrombectomy': '取栓',
-            'thrombolysis': '溶栓',
-            'indication': '溶栓',
-            'ncct_imaging': '影像评分',
-            'cta_imaging': '影像分诊',
-            'ctp_imaging': '影像分诊'
+            'thrombectomy': 'Thrombectomy',
+            'thrombolysis': 'Thrombolysis',
+            'indication': 'Thrombolysis',
+            'ncct_imaging': 'Imaging Scoring',
+            'cta_imaging': 'Imaging Triage',
+            'ctp_imaging': 'Imaging Triage'
         }
 
-        kb_type = next((v for k, v in kb_type_names.items() if k in agent_name), '临床')
-        formatted = [f"【{kb_type}文献检索结果】"]
+        kb_type = next((v for k, v in kb_type_names.items() if k in agent_name), 'Clinical')
+        formatted = [f"[{kb_type} Literature Results]"]
 
         for idx, result in enumerate(results, 1):
             metadata = result.get('metadata', {})
@@ -153,30 +153,30 @@ class SimpleRAGCoordinator:
 
             formatted.append(
                 f"\n{idx}. {title}\n"
-                f"   PMID: {pmid} | 期刊: {journal} | 年份: {year}"
+                f"   PMID: {pmid} | Journal: {journal} | Year: {year}"
             )
 
         return "\n".join(formatted)
 
     def check_kb_status(self) -> Dict[str, int]:
-        """检查各知识库状态"""
+        """Check knowledge base status"""
         status = {}
         for kb_name, kb_data in self.literature_db.items():
             status[kb_name] = len(kb_data['documents'])
         return status
 
 
-# 兼容性包装：自动选择可用的RAG系统
+# Compatibility wrapper: auto-select available RAG system
 def RAGCoordinator(*args, **kwargs):
     """
-    智能RAG协调器工厂函数
+    Smart RAG coordinator factory function
 
-    自动选择：
-    1. 如果simple_rag可用 → 使用SimpleRAGCoordinator
-    2. 如果chromadb可用 → 使用完整版RAGCoordinator
-    3. 都不可用 → 返回None
+    Auto-selects:
+    1. If simple_rag is available -> Use SimpleRAGCoordinator
+    2. If chromadb is available -> Use FullRAGCoordinator
+    3. If neither available -> Return None
     """
-    # 尝试简化版（优先）
+    # Try simplified version (preferred)
     try:
         coordinator = SimpleRAGCoordinator()
         if coordinator.literature_db:
@@ -185,7 +185,7 @@ def RAGCoordinator(*args, **kwargs):
     except Exception as e:
         print(f"SimpleRAGCoordinator not available: {e}")
 
-    # 尝试完整版
+    # Try full version
     try:
         from rag.rag_coordinator import RAGCoordinator as FullRAGCoordinator
         coordinator = FullRAGCoordinator(*args, **kwargs)
@@ -198,25 +198,25 @@ def RAGCoordinator(*args, **kwargs):
 
 
 if __name__ == "__main__":
-    # 测试代码
+    # Test code
     print("Testing SimpleRAGCoordinator...")
 
     coordinator = RAGCoordinator()
 
     if coordinator:
-        # 检查知识库状态
-        print("\n知识库状态:")
+        # Check knowledge base status
+        print("\nKnowledge base status:")
         status = coordinator.check_kb_status()
         for kb_name, count in status.items():
             print(f"  {kb_name}: {count} documents")
 
-        # 测试检索
+        # Test retrieval
         test_context = {
             'lvo_output': 'M1 segment occlusion',
             'nihss_score': 15
         }
 
-        print("\n测试检索 (thrombectomy_agent):")
+        print("\nTest retrieval (thrombectomy_agent):")
         result = coordinator.retrieve('thrombectomy_agent', test_context, top_k=2)
         if result:
             print(result[:500] + "..." if len(result) > 500 else result)

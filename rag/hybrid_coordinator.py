@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-混合检索协调器 - 运行时使用
+Hybrid Retrieval Coordinator - Runtime Usage
 HybridRAGCoordinator for runtime retrieval
 
-使用方法:
+Usage:
     coordinator = HybridRAGCoordinator()
     results = coordinator.retrieve('thrombectomy_agent', context, top_k=5)
 """
@@ -16,9 +16,9 @@ from typing import List, Dict
 from pathlib import Path
 
 class HybridRAGCoordinator:
-    """混合检索 RAG 协调器"""
+    """Hybrid Retrieval RAG Coordinator"""
 
-    # Agent到知识库的映射
+    # Agent-to-knowledge-base mapping
     AGENT_KB_MAPPING = {
         'thrombectomy_agent': 'thrombectomy_literature',
         'thrombolysis_agent': 'thrombolysis_literature',
@@ -30,22 +30,22 @@ class HybridRAGCoordinator:
     }
 
     def __init__(self, persist_dir="knowledge_base/hybrid_rag"):
-        """初始化混合检索协调器"""
+        """Initialize hybrid retrieval coordinator"""
         self.persist_dir = persist_dir
         self.knowledge_bases = {}
         self.embedding_model = None
         self.reranker_model = None
 
-        # 加载知识库
+        # Load knowledge bases
         self._load_knowledge_bases()
 
-        # 延迟加载模型（首次检索时加载）
+        # Lazy load models (loaded on first retrieval)
         self.models_loaded = False
 
     def _load_knowledge_bases(self):
-        """加载所有知识库"""
+        """Load all knowledge bases"""
         if not os.path.exists(self.persist_dir):
-            print(f"⚠️  混合检索目录不存在: {self.persist_dir}")
+            print(f"⚠️  Hybrid retrieval directory not found: {self.persist_dir}")
             return
 
         pkl_files = list(Path(self.persist_dir).glob("*.pkl"))
@@ -58,53 +58,53 @@ class HybridRAGCoordinator:
                     data = pickle.load(f)
 
                 self.knowledge_bases[collection_name] = data
-                print(f"✓ 加载知识库: {collection_name} ({len(data['documents'])} 篇)")
+                print(f"✓ Loaded knowledge base: {collection_name} ({len(data['documents'])} docs)")
 
             except Exception as e:
-                print(f"⚠️  加载失败 {collection_name}: {e}")
+                print(f"⚠️  Failed to load {collection_name}: {e}")
 
-        print(f"\n✓ HybridRAGCoordinator 初始化完成")
-        print(f"  知识库数量: {len(self.knowledge_bases)}")
-        print(f"  检索模式: 混合检索 (Semantic + BM25 + Reranking)")
+        print(f"\n✓ HybridRAGCoordinator initialized")
+        print(f"  Knowledge bases: {len(self.knowledge_bases)}")
+        print(f"  Retrieval mode: Hybrid (Semantic + BM25 + Reranking)")
 
     def _load_models(self):
-        """延迟加载模型"""
+        """Lazy load models"""
         if self.models_loaded:
             return
 
-        print("\n加载混合检索模型...")
+        print("\nLoading hybrid retrieval models...")
 
         try:
             from sentence_transformers import SentenceTransformer, CrossEncoder
 
-            # 加载嵌入模型
+            # Load embedding model
             self.embedding_model = SentenceTransformer('BAAI/bge-large-zh-v1.5')
-            print("✓ 嵌入模型加载完成")
+            print("✓ Embedding model loaded")
 
-            # 加载重排序模型
+            # Load reranking model
             self.reranker_model = CrossEncoder('BAAI/bge-reranker-base')
-            print("✓ 重排序模型加载完成")
+            print("✓ Reranking model loaded")
 
             self.models_loaded = True
 
         except Exception as e:
-            print(f"⚠️  模型加载失败: {e}")
-            print("  将回退到简单检索模式")
+            print(f"⚠️  Model loading failed: {e}")
+            print("  Falling back to simple retrieval mode")
             self.models_loaded = False
 
     def _semantic_search(self, query, kb_data, top_k=20):
-        """语义检索"""
+        """Semantic retrieval"""
         query_embedding = self.embedding_model.encode([query], normalize_embeddings=True)[0]
         embeddings = kb_data['embeddings']
 
-        # 计算余弦相似度
+        # Compute cosine similarity
         scores = np.dot(embeddings, query_embedding)
         top_indices = np.argsort(scores)[-top_k:][::-1]
 
         return top_indices, scores[top_indices]
 
     def _bm25_search(self, query, kb_data, top_k=20):
-        """BM25 关键词检索"""
+        """BM25 keyword retrieval"""
         bm25 = kb_data['bm25']
         query_tokens = query.lower().split()
 
@@ -114,7 +114,7 @@ class HybridRAGCoordinator:
         return top_indices, scores[top_indices]
 
     def _rerank(self, query, documents, top_k=5):
-        """重排序"""
+        """Reranking"""
         pairs = [[query, doc] for doc in documents]
         scores = self.reranker_model.predict(pairs)
         top_indices = np.argsort(scores)[-top_k:][::-1]
@@ -122,7 +122,7 @@ class HybridRAGCoordinator:
         return top_indices, scores[top_indices]
 
     def _build_query(self, agent_name: str, context: Dict) -> str:
-        """构建智能查询"""
+        """Build intelligent query"""
         query_parts = []
 
         if 'thrombectomy' in agent_name:
@@ -147,46 +147,46 @@ class HybridRAGCoordinator:
 
     def retrieve(self, agent_name: str, context: Dict, top_k: int = 5) -> str:
         """
-        混合检索主方法
+        Hybrid retrieval main method
 
-        流程:
-        1. 语义检索 Top-20
-        2. BM25 检索 Top-20
-        3. 合并去重 Top-30
-        4. 重排序 Top-K
+        Process:
+        1. Semantic retrieval Top-20
+        2. BM25 retrieval Top-20
+        3. Merge and deduplicate Top-30
+        4. Rerank Top-K
         """
-        # 加载模型（首次调用时）
+        # Load models (on first call)
         if not self.models_loaded:
             self._load_models()
 
         if not self.models_loaded:
-            return ""  # 模型加载失败，返回空
+            return ""  # Model loading failed, return empty
 
-        # 获取知识库
+        # Get knowledge base
         collection_name = self.AGENT_KB_MAPPING.get(agent_name)
         if not collection_name or collection_name not in self.knowledge_bases:
             return ""
 
         kb_data = self.knowledge_bases[collection_name]
 
-        # 构建查询
+        # Build query
         query = self._build_query(agent_name, context)
 
         try:
-            # Step 1: 语义检索
+            # Step 1: Semantic retrieval
             semantic_indices, semantic_scores = self._semantic_search(query, kb_data, top_k=20)
 
-            # Step 2: BM25 检索
+            # Step 2: BM25 retrieval
             bm25_indices, bm25_scores = self._bm25_search(query, kb_data, top_k=20)
 
-            # Step 3: 合并候选（去重）
+            # Step 3: Merge candidates (deduplicate)
             candidate_indices = list(set(semantic_indices) | set(bm25_indices))
 
-            # Step 4: 重排序
+            # Step 4: Reranking
             candidate_docs = [kb_data['documents'][idx] for idx in candidate_indices]
             rerank_indices, rerank_scores = self._rerank(query, candidate_docs, top_k=top_k)
 
-            # 获取最终结果
+            # Get final results
             final_indices = [candidate_indices[idx] for idx in rerank_indices]
             results = []
 
@@ -197,43 +197,43 @@ class HybridRAGCoordinator:
                     'title': metadata['title'],
                     'journal': metadata['journal'],
                     'year': metadata['year'],
-                    'abstract': metadata.get('abstract', '摘要缺失')
+                    'abstract': metadata.get('abstract', 'Abstract missing')
                 })
 
-            # 格式化输出
+            # Format output
             return self._format_results(results, agent_name)
 
         except Exception as e:
-            print(f"⚠️  混合检索失败: {e}")
+            print(f"⚠️  Hybrid retrieval failed: {e}")
             return ""
 
     def _format_results(self, results: List[Dict], agent_name: str) -> str:
-        """格式化检索结果"""
+        """Format retrieval results"""
         if not results:
             return ""
 
-        # 根据Agent类型定制标题
+        # Customize title based on Agent type
         titles = {
-            'thrombectomy': '取栓文献检索结果',
-            'thrombolysis': '溶栓文献检索结果',
-            'indication': '溶栓文献检索结果',
-            'ncct': '影像评分文献检索结果',
-            'cta': '影像分诊文献检索结果',
-            'ctp': '影像分诊文献检索结果',
+            'thrombectomy': 'Thrombectomy Literature Search Results',
+            'thrombolysis': 'Thrombolysis Literature Search Results',
+            'indication': 'Thrombolysis Literature Search Results',
+            'ncct': 'Imaging Scoring Literature Results',
+            'cta': 'Imaging Triage Literature Results',
+            'ctp': 'Imaging Triage Literature Results',
         }
 
-        title = '文献检索结果'
+        title = 'Literature Search Results'
         for key, val in titles.items():
             if key in agent_name:
                 title = val
                 break
 
-        lines = [f"【{title}】", ""]
+        lines = [f"[{title}]", ""]
 
         for i, result in enumerate(results, 1):
             lines.append(f"{i}. {result['title']}")
-            lines.append(f"   PMID: {result['pmid']} | 期刊: {result['journal']} | 年份: {result['year']}")
-            lines.append(f"   摘要: {result.get('abstract', '摘要缺失')}")
+            lines.append(f"   PMID: {result['pmid']} | Journal: {result['journal']} | Year: {result['year']}")
+            lines.append(f"   Abstract: {result.get('abstract', 'Abstract missing')}")
             lines.append("")
 
         return '\n'.join(lines)

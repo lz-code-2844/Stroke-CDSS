@@ -7,11 +7,11 @@ from openai import OpenAI
 from typing import Optional, Union, List, Dict, Any
 from config.model_config_loader import get_config_loader
 
-# ==================== 配置加载 ====================
+# ==================== Configuration Loading ====================
 config_loader = get_config_loader()
 global_config = config_loader.get_global_config()
 
-# 全局配置
+# Global configuration
 API_KEY = global_config.get('api_key', 'my-secret-key')
 MEDIA_BASE_URL = global_config.get('media_base_url', 'http://192.168.8.17:8866')
 VIDEO_MAX_PIXELS = global_config.get('video_max_pixels', 163840)
@@ -20,18 +20,18 @@ VIDEO_FPS = global_config.get('video_fps', 1.0)
 MAX_VIDEO_COUNT = global_config.get('max_video_count', 4)
 API_TIMEOUT = global_config.get('api_timeout', 120)
 
-# ==================== 客户端缓存 ====================
+# ==================== Client Cache ====================
 _client_cache: Dict[str, OpenAI] = {}
 
 def get_client(base_url: str) -> OpenAI:
     """
-    获取或创建 OpenAI 客户端 (带缓存)
+    Get or create an OpenAI client (with caching)
 
     Args:
-        base_url: API 基础 URL
+        base_url: API base URL
 
     Returns:
-        OpenAI 客户端实例
+        OpenAI client instance
     """
     if base_url not in _client_cache:
         _client_cache[base_url] = OpenAI(
@@ -48,19 +48,19 @@ def _build_video_content(
     logger=None
 ) -> List[Dict[str, Any]]:
     """
-    构建视觉模型的 content payload (包含文本和视频)
+    Build content payload for vision models (including text and video)
 
     Args:
-        prompt_text: 提示文本
-        video_paths: 视频路径 (字符串或列表)
-        logger: 日志记录器
+        prompt_text: Prompt text
+        video_paths: Video path(s) (string or list)
+        logger: Logger instance
 
     Returns:
-        Content payload 列表
+        Content payload list
     """
     content_payload = [{"type": "text", "text": prompt_text}]
 
-    # 处理视频路径
+    # Process video paths
     paths_to_process = []
     if video_paths:
         if isinstance(video_paths, list):
@@ -68,18 +68,18 @@ def _build_video_content(
         elif isinstance(video_paths, str):
             paths_to_process = [p.strip() for p in video_paths.split(';') if p.strip()]
 
-    # 数量熔断
+    # Video count circuit breaker
     original_count = len(paths_to_process)
     if original_count > MAX_VIDEO_COUNT:
         paths_to_process = paths_to_process[:MAX_VIDEO_COUNT]
         if logger:
-            logger.warning(f"    视频数量超限: {original_count} -> {MAX_VIDEO_COUNT}")
+            logger.warning(f"    Video count exceeded limit: {original_count} -> {MAX_VIDEO_COUNT}")
 
-    # 构建视频 payload
+    # Build video payload
     video_log_info = []
     for path in paths_to_process:
         full_video_url = path
-        # 拼接 URL
+        # Construct URL
         if not path.startswith("http"):
             clean_rel_path = path.lstrip('/')
             full_video_url = f"{MEDIA_BASE_URL.rstrip('/')}/{clean_rel_path}"
@@ -94,7 +94,7 @@ def _build_video_content(
         video_log_info.append(full_video_url)
 
     if logger and video_log_info:
-        logger.info(f"    [Video Payload] 添加 {len(video_log_info)} 个视频 (原始: {original_count})")
+        logger.info(f"    [Video Payload] Added {len(video_log_info)} videos (original: {original_count})")
 
     return content_payload
 
@@ -108,40 +108,40 @@ def call_llm_with_config(
     **override_params
 ) -> str:
     """
-    使用配置文件调用 LLM (推荐使用此函数)
+    Call LLM using configuration file (recommended)
 
     Args:
-        prompt_text: 提示文本
-        agent_name: Agent 名称 (用于自动选择模型)
-        model_key: 模型键名 (如果指定则覆盖 agent_name 的选择)
-        video_path: 视频路径 (可选)
-        logger: 日志记录器
-        **override_params: 覆盖默认参数 (如 temperature, max_tokens)
+        prompt_text: Prompt text
+        agent_name: Agent name (for automatic model selection)
+        model_key: Model key (overrides agent_name selection if specified)
+        video_path: Video path (optional)
+        logger: Logger instance
+        **override_params: Override default parameters (e.g. temperature, max_tokens)
 
     Returns:
-        模型响应文本
+        Model response text
     """
-    # 1. 确定使用哪个模型
+    # 1. Determine which model to use
     if model_key is None:
         if agent_name:
             model_key = config_loader.get_agent_model_key(agent_name)
         else:
             model_key = config_loader.config.get('default_model', 'qwen_vl')
 
-    # 2. 获取模型配置
+    # 2. Get model configuration
     model_config = config_loader.get_model_config(model_key)
     model_name = model_config['name']
     base_url = model_config['base_url']
     model_type = model_config.get('type', 'vision')
     default_params = model_config.get('default_params', {})
 
-    # 3. 合并参数
+    # 3. Merge parameters
     request_params = {**default_params, **override_params}
 
     if logger:
-        logger.info(f"    [模型选择] Agent: {agent_name or 'N/A'}, Model: {model_name} ({model_type})")
+        logger.info(f"    [Model Selection] Agent: {agent_name or 'N/A'}, Model: {model_name} ({model_type})")
 
-    # 4. 调用底层函数
+    # 4. Call underlying function
     return call_video_model(
         prompt_text=prompt_text,
         video_path=video_path,
@@ -163,21 +163,21 @@ def call_video_model(
     **request_params
 ) -> str:
     """
-    调用远程大模型 (支持视觉模型与纯文本模型的自动路由与格式适配)
+    Call remote LLM (supports automatic routing and format adaptation for vision and text models)
 
     Args:
-        prompt_text: 提示文本
-        video_path: 视频路径 (可选)
-        model_name: 模型名称
-        base_url: API 基础 URL
-        model_type: 模型类型 ('vision' 或 'text')
-        logger: 日志记录器
-        **request_params: 额外的请求参数
+        prompt_text: Prompt text
+        video_path: Video path (optional)
+        model_name: Model name
+        base_url: API base URL
+        model_type: Model type ('vision' or 'text')
+        logger: Logger instance
+        **request_params: Additional request parameters
 
     Returns:
-        模型响应文本
+        Model response text
     """
-    # 兼容旧版调用 (如果没有指定 base_url，使用默认配置)
+    # Backward compatibility (use default config if base_url not specified)
     if model_name is None:
         default_model_key = config_loader.config.get('default_model', 'qwen_vl')
         model_config = config_loader.get_model_config(default_model_key)
@@ -185,65 +185,65 @@ def call_video_model(
         base_url = model_config['base_url']
         model_type = model_config.get('type', 'vision')
 
-    # 获取客户端
+    # Get client
     current_client = get_client(base_url)
 
-    # 判断是否为纯文本模型
+    # Determine if text-only model
     is_text_model = (model_type == "text")
 
-    # 构建消息
+    # Build messages
     messages = []
 
-    # === 构建 Content Payload ===
+    # === Build Content Payload ===
     if is_text_model:
-        # 纯文本模型: 必须发送纯字符串 Content
+        # Text model: Must send plain string content
         messages.append({"role": "user", "content": prompt_text})
         if logger:
             logger.info(f"    [Text Payload] Model: {model_name}, Prompt Length: {len(prompt_text)}")
     else:
-        # 视觉模型: 必须发送 List[Dict] 格式
+        # Vision model: Must send List[Dict] format
         content_payload = _build_video_content(prompt_text, video_path, logger)
         messages.append({"role": "user", "content": content_payload})
 
-    # === 调试日志 ===
+    # === Debug Logging ===
     if logger:
         log_msgs = json.dumps(messages, ensure_ascii=False)
         if len(log_msgs) > 2000:
             log_msgs = log_msgs[:2000] + "...(truncated)"
-        # logger.debug(f"    Messages Preview: {log_msgs}")  # 可选调试
+        # logger.debug(f"    Messages Preview: {log_msgs}")  # Optional debug
 
-    # === 发送请求 ===
+    # === Send Request ===
     start_time = time.time()
     try:
         if logger:
-            logger.info(f"    >>> 发送请求至 {model_name} (Timeout {API_TIMEOUT}s)...")
+            logger.info(f"    >>> Sending request to {model_name} (Timeout {API_TIMEOUT}s)...")
 
-        # 构建请求参数
+        # Build request parameters
         api_params = {
             "model": model_name,
             "messages": messages,
         }
 
-        # 合并用户传入的参数
+        # Merge user-provided parameters
         api_params.update(request_params)
 
-        # 发送 API 请求
+        # Send API request
         response = current_client.chat.completions.create(**api_params)
 
         elapsed = time.time() - start_time
         if logger:
-            logger.info(f"    ✓ 成功! ({elapsed:.2f}s)")
+            logger.info(f"    ✓ Success! ({elapsed:.2f}s)")
 
         content = response.choices[0].message.content
 
-        # 记录响应
+        # Log response
         if logger:
             log_content = str(content)
             if len(log_content) > 200:
                 log_content = log_content[:200] + "..."
             logger.info(f"    Content: {log_content.replace(chr(10), ' ')}")
 
-        # === 结果清洗 ===
+        # === Result Cleaning ===
         if isinstance(content, list):
             text_parts = [part['text'] for part in content if part.get('type') == 'text']
             return "\n".join(text_parts).strip()

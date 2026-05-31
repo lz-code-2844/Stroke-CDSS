@@ -1,66 +1,66 @@
-# 模型配置系统 - 快速开始
+# Model Configuration System - Quick Start
 
-## 🎯 核心改进
+## 🎯 Core Improvements
 
-本次升级实现了**配置驱动的模型选择系统**，让你可以灵活地为每个 Agent 指定使用不同的 LLM 模型。
+This upgrade implements a **configuration-driven model selection system**, allowing you to flexibly specify different LLM models for each Agent.
 
 ---
 
-## 📁 新增文件
+## 📁 New Files
 
 ```
 agent_project_v6/
 ├── config/
-│   ├── __init__.py                    # 配置模块初始化
-│   ├── model_config.yaml              # 模型配置文件 (核心)
-│   └── model_config_loader.py         # 配置加载器
+│   ├── __init__.py                    # Configuration module initialization
+│   ├── model_config.yaml              # Model configuration file (core)
+│   └── model_config_loader.py         # Configuration loader
 ├── docs/
-│   ├── MODEL_CONFIG_GUIDE.md          # 详细使用指南
-│   └── MODEL_CONFIG_QUICKSTART.md     # 本文件
+│   ├── MODEL_CONFIG_GUIDE.md          # Detailed usage guide
+│   └── MODEL_CONFIG_QUICKSTART.md     # This file
 ├── examples/
-│   └── model_config_example.py        # 使用示例
+│   └── model_config_example.py        # Usage example
 └── utils/
-    └── llm_client.py                  # 改进后的 LLM 客户端
+    └── llm_client.py                  # Improved LLM client
 ```
 
 ---
 
-## 🚀 快速使用
+## 🚀 Quick Usage
 
-### 1. 修改配置文件
+### 1. Modify the Configuration File
 
-编辑 `config/model_config.yaml`:
+Edit `config/model_config.yaml`:
 
 ```yaml
 agent_models:
-  # 为每个 Agent 指定模型
-  triage: gpt_oss          # Triage 使用 GPT-OSS
-  hemorrhage: qwen_vl      # Hemorrhage 使用 Qwen-VL
-  director: gpt_oss        # Director 使用 GPT-OSS
+  # Specify a model for each Agent
+  triage: gpt_oss          # Triage uses GPT-OSS
+  hemorrhage: qwen_vl      # Hemorrhage uses Qwen-VL
+  director: gpt_oss        # Director uses GPT-OSS
 ```
 
-### 2. 使用 Agent (自动路由)
+### 2. Use an Agent (Automatic Routing)
 
 ```python
 from agents.react_agent import ReActClinicalAgent
 
-# Agent 会根据配置文件自动选择模型
+# The Agent automatically selects a model based on the configuration file
 agent = ReActClinicalAgent("01_triage_agent.md")
 result = agent.run(video_paths, context, logger)
 ```
 
-### 3. 手动指定模型
+### 3. Manually Specify a Model
 
 ```python
-# 强制使用特定模型
+# Force the use of a specific model
 agent = ReActClinicalAgent("01_triage_agent.md", model_key="qwen_vl")
 ```
 
 ---
 
-## 🔧 配置说明
+## 🔧 Configuration Reference
 
-### 全局参数
+### Global Parameters
 
 ```yaml
 global:
@@ -70,14 +70,14 @@ global:
   max_video_count: 4
 ```
 
-### 模型定义
+### Model Definition
 
 ```yaml
 models:
-  qwen_vl:                              # 模型键名
-    name: "qwen3vl_235b_2507"           # 实际模型名称
+  qwen_vl:                              # Model key name
+    name: "qwen3vl_235b_2507"           # Actual model name
     base_url: "http://192.168.8.17:9011/v1"
-    type: "vision"                      # 模型类型
+    type: "vision"                      # Model type
     default_params:
       temperature: 0.01
       max_tokens: 4096
@@ -85,57 +85,57 @@ models:
 
 ---
 
-## 📊 默认配置
+## 📊 Default Configuration
 
-当前配置的 Agent 模型映射:
+Current Agent-to-model mapping:
 
-| Agent 类型 | 使用模型 | 说明 |
+| Agent Type | Model Used | Description |
 |-----------|---------|------|
-| triage | gpt_oss | 纯文本分析 |
-| time_calc | gpt_oss | 纯文本计算 |
-| thrombolysis | gpt_oss | 纯文本决策 |
-| indication | gpt_oss | 纯文本分析 |
-| thrombectomy | gpt_oss | 纯文本决策 |
-| summary | gpt_oss | 纯文本总结 |
-| nihss_scorer | gpt_oss | 纯文本评分 |
-| fact_extractor | gpt_oss | 纯文本提取 |
-| consistency_check | gpt_oss | 纯文本检查 |
-| director | gpt_oss | 纯文本协调 |
-| hemorrhage | qwen_vl | 视觉分析 |
-| ncct_imaging | qwen_vl | 视觉分析 |
-| aneurysm | qwen_vl | 视觉分析 |
-| lvo | qwen_vl | 视觉分析 |
-| cta_imaging | qwen_vl | 视觉分析 |
-| ctp_imaging | qwen_vl | 视觉分析 |
+| triage | gpt_oss | Text-only analysis |
+| time_calc | gpt_oss | Text-only calculation |
+| thrombolysis | gpt_oss | Text-only decision |
+| indication | gpt_oss | Text-only analysis |
+| thrombectomy | gpt_oss | Text-only decision |
+| summary | gpt_oss | Text-only summarization |
+| nihss_scorer | gpt_oss | Text-only scoring |
+| fact_extractor | gpt_oss | Text-only extraction |
+| consistency_check | gpt_oss | Text-only checking |
+| director | gpt_oss | Text-only coordination |
+| hemorrhage | qwen_vl | Visual analysis |
+| ncct_imaging | qwen_vl | Visual analysis |
+| aneurysm | qwen_vl | Visual analysis |
+| lvo | qwen_vl | Visual analysis |
+| cta_imaging | qwen_vl | Visual analysis |
+| ctp_imaging | qwen_vl | Visual analysis |
 
 ---
 
-## 💡 常见场景
+## 💡 Common Scenarios
 
-### 场景 1: 切换所有纯文本 Agent 到另一个模型
+### Scenario 1: Switch All Text-Only Agents to Another Model
 
 ```yaml
 agent_models:
   triage: claude_sonnet
   time_calc: claude_sonnet
   summary: claude_sonnet
-  # ... 其他纯文本 Agent
+  # ... other text-only Agents
 ```
 
-### 场景 2: 为特定 Agent 使用不同参数
+### Scenario 2: Use Different Parameters for a Specific Agent
 
 ```python
 response = call_llm_with_config(
     prompt_text="...",
     agent_name="director",
-    temperature=0.9,      # 提高创造性
-    max_tokens=8192       # 增加输出长度
+    temperature=0.9,      # Increase creativity
+    max_tokens=8192       # Increase output length
 )
 ```
 
-### 场景 3: 添加新模型
+### Scenario 3: Add a New Model
 
-1. 在 `config/model_config.yaml` 中定义新模型:
+1. Define the new model in `config/model_config.yaml`:
 
 ```yaml
 models:
@@ -148,7 +148,7 @@ models:
       max_tokens: 4096
 ```
 
-2. 为 Agent 指定新模型:
+2. Assign the new model to an Agent:
 
 ```yaml
 agent_models:
@@ -157,56 +157,56 @@ agent_models:
 
 ---
 
-## 🔍 调试技巧
+## 🔍 Debugging Tips
 
-### 查看当前使用的模型
+### View Currently Used Models
 
-运行示例脚本:
+Run the example script:
 
 ```bash
 cd /data/qunhui_21T/Yan-20250730/code/agent_project_v6
 python examples/model_config_example.py
 ```
 
-### 启用详细日志
+### Enable Verbose Logging
 
 ```python
 import logging
 logging.basicConfig(level=logging.INFO)
 ```
 
-日志输出示例:
+Example log output:
 ```
-[模型选择] Agent: triage, Model: gpt_oss_120b (text)
->>> 发送请求至 gpt_oss_120b (Timeout 120s)...
-✓ 成功! (2.34s)
+[Model Selection] Agent: triage, Model: gpt_oss_120b (text)
+>>> Sending request to gpt_oss_120b (Timeout 120s)...
+✓ Success! (2.34s)
 ```
 
 ---
 
-## 📚 更多信息
+## 📚 More Information
 
-- 详细文档: [docs/MODEL_CONFIG_GUIDE.md](MODEL_CONFIG_GUIDE.md)
-- 使用示例: [examples/model_config_example.py](../examples/model_config_example.py)
-- 配置文件: [config/model_config.yaml](../config/model_config.yaml)
-
----
-
-## ⚠️ 注意事项
-
-1. **配置文件修改后需要重启应用**
-2. **视觉模型 (type: vision) 支持视频/图像输入**
-3. **文本模型 (type: text) 仅支持纯文本输入**
-4. **系统会自动处理不同模型的格式差异**
+- Detailed documentation: [docs/MODEL_CONFIG_GUIDE.md](MODEL_CONFIG_GUIDE.md)
+- Usage example: [examples/model_config_example.py](../examples/model_config_example.py)
+- Configuration file: [config/model_config.yaml](../config/model_config.yaml)
 
 ---
 
-## 🎉 开始使用
+## ⚠️ Important Notes
 
-现在你可以:
+1. **You must restart the application after modifying the configuration file**
+2. **Vision models (type: vision) support video/image input**
+3. **Text models (type: text) only support plain text input**
+4. **The system automatically handles format differences between models**
 
-1. ✅ 编辑 `config/model_config.yaml` 配置你的模型
-2. ✅ 运行现有代码，Agent 会自动使用配置的模型
-3. ✅ 根据需要动态切换模型，无需修改代码
+---
 
-祝使用愉快！
+## 🎉 Get Started
+
+Now you can:
+
+1. ✅ Edit `config/model_config.yaml` to configure your models
+2. ✅ Run existing code — Agents will automatically use the configured models
+3. ✅ Dynamically switch models as needed without modifying code
+
+Happy coding!

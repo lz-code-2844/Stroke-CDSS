@@ -10,16 +10,16 @@ from utils.prompt_parser import parse_agent_prompt
 class ReActClinicalAgent:
     def __init__(self, prompt_file, model_key=None):
         """
-        初始化 Agent
+        Initialize Agent
 
         Args:
-            prompt_file: 可以是绝对路径，也可以是相对于prompts目录的文件名
-            model_key: 模型键名 (可选，如 'qwen_vl', 'gpt_oss')
-                      如果不指定，将根据 agent 名称自动选择
+            prompt_file: Absolute path or filename relative to prompts directory
+            model_key: Model key (optional, e.g. 'qwen_vl', 'gpt_oss')
+                      If not specified, auto-selected based on agent name
         """
         self.model_key = model_key
 
-        # 如果是绝对路径则直接使用，否则拼接prompts目录
+        # Use absolute path directly, otherwise join with prompts directory
         if os.path.isabs(prompt_file):
             self.prompt_path = prompt_file
         else:
@@ -27,11 +27,11 @@ class ReActClinicalAgent:
 
         self.name = os.path.basename(prompt_file).replace('.md', '')
         self.prompts = parse_agent_prompt(self.prompt_path)
-        self.history = []  # 记录每一次交互（输入/输出/时间戳）
+        self.history = []  # Record each interaction (input/output/timestamp)
 
     def _safe_format(self, template, context):
         """
-        防止 KeyError 的安全格式化
+        Safe formatting that prevents KeyError
         """
         keys = re.findall(r'\{([a-zA-Z0-9_]+)\}', template)
         
@@ -42,7 +42,7 @@ class ReActClinicalAgent:
         return formatted_text
 
     def _parse_check(self, text):
-        """解析 Self-Check JSON"""
+        """Parse Self-Check JSON"""
         try:
             clean_text = text.replace("```json", "").replace("```", "").strip()
             data = json.loads(clean_text)
@@ -53,30 +53,30 @@ class ReActClinicalAgent:
 
     def run(self, video_paths, context, logger=None, max_retries=3):
         """
-        主方法: 运行 agent 并完整记录每一次调用的输入/输出/时间戳
-        返回 act 阶段的输出
+        Main method: Run agent and fully record input/output/timestamp for each call
+        Returns the output from the act phase
         """
-        # 确定输入视频路径
+        # Determine input video paths
         vid = None
         
-        # 1. 纯文本类 Agent (无需视频)
-        # [改进] 显式加入 'summary'
+        # 1. Text-only Agents (no video needed)
+        # [Improved] Explicitly include 'summary'
         if any(k in self.name for k in ['triage', 'time_calc', 'thrombolysis', 'indication', 'thrombectomy', 'summary']):
             vid = None 
             
-        # 2. NCCT 类
+        # 2. NCCT type
         elif 'hemorrhage' in self.name or 'ncct_imaging' in self.name: 
             vid = video_paths.get('ncct_path')
             
-        # 3. CTA 类
+        # 3. CTA type
         elif 'aneurysm' in self.name or 'lvo' in self.name or 'cta_imaging' in self.name: 
             vid = video_paths.get('cta_path')
             
-        # 4. CTP 类
+        # 4. CTP type
         elif 'ctp_imaging' in self.name:
             vid = video_paths.get('ctp_path')
             
-        # 5. 旧版兼容 (兜底)
+        # 5. Legacy compatibility (fallback)
         elif 'imaging' in self.name: 
             vid = video_paths.get('ctp_path')
 
@@ -100,7 +100,7 @@ class ReActClinicalAgent:
             safe_r_prompt = self._safe_format(reasoning_prompt, context)
             r_start_ts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
             
-            # 调用模型 (使用新的配置系统)
+            # Call model (using new config system)
             r_res = call_llm_with_config(
                 prompt_text=safe_r_prompt,
                 agent_name=self.name,
@@ -115,7 +115,7 @@ class ReActClinicalAgent:
                 "step": "reasoning",
                 "input": {
                     "prompt": safe_r_prompt,
-                    "video_path": str(vid) if vid else "None", # 记录路径字符串而非列表对象
+                    "video_path": str(vid) if vid else "None", # Record path string instead of list object
                     "context": {k:v for k, v in context.items()}
                 },
                 "output": r_res
@@ -123,7 +123,7 @@ class ReActClinicalAgent:
             self.history.append(reason_log)
             step_logs.append(reason_log)
             
-            # [改进] 快速失败机制: 如果 Reasoning 报错，直接停止，不进行 Act
+            # [Improved] Fast-fail mechanism: If Reasoning errors, stop immediately without Act
             if "ERROR" in r_res and "500" in r_res:
                 return r_res
 
@@ -155,15 +155,15 @@ class ReActClinicalAgent:
             self.history.append(act_log)
             step_logs.append(act_log)
 
-            # === Step 3: Self-Check（可选）===
-            if not self.prompts.get('self_check'): # 使用 get 防止 key error
+            # === Step 3: Self-Check (optional) ===
+            if not self.prompts.get('self_check'): # Use get to prevent KeyError
                 return a_res
 
             context.update({'input_context': ctx_str, 'act_result': a_res})
             safe_c_prompt = self._safe_format(self.prompts['self_check'], context)
             c_start_ts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
             
-            # [改进] 自查不传视频 (vid=None)，提高速度，减少超时风险
+            # [Improved] Self-check does not pass video (vid=None) to improve speed and reduce timeout risk
             c_res = call_llm_with_config(
                 prompt_text=safe_c_prompt,
                 agent_name=self.name,
@@ -178,7 +178,7 @@ class ReActClinicalAgent:
                 "step": "self_check",
                 "input": {
                     "prompt": safe_c_prompt,
-                    "video_path": "None (Optimization)", # 明确记录未传视频
+                    "video_path": "None (Optimization)", # Explicitly record no video passed
                     "context": {k:v for k, v in context.items()}
                 },
                 "output": c_res
@@ -189,6 +189,6 @@ class ReActClinicalAgent:
             status, feedback = self._parse_check(c_res)
 
             if status == "PASS":
-                return a_res  # 成功
+                return a_res  # Success
 
         return f"[WARNING: Max Retries Exceeded] {last_act}"

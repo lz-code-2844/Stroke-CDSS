@@ -1,34 +1,34 @@
-# 模型配置系统使用指南
+# Model Configuration System User Guide
 
-## 📋 目录
+## 📋 Table of Contents
 
-1. [概述](#概述)
-2. [配置文件结构](#配置文件结构)
-3. [快速开始](#快速开始)
-4. [高级用法](#高级用法)
-5. [常见问题](#常见问题)
-
----
-
-## 概述
-
-本项目支持灵活的模型配置系统，允许你为每个 Agent 指定使用不同的 LLM 模型。
-
-### 主要特性
-
-- ✅ **配置驱动**: 通过 YAML 文件集中管理所有模型配置
-- ✅ **自动路由**: 根据 Agent 名称自动选择合适的模型
-- ✅ **多模型支持**: 同时支持视觉模型 (Qwen-VL) 和纯文本模型 (GPT-OSS)
-- ✅ **灵活覆盖**: 支持运行时动态指定模型
-- ✅ **参数定制**: 为每个模型配置独立的参数 (temperature, max_tokens 等)
+1. [Overview](#overview)
+2. [Configuration File Structure](#configuration-file-structure)
+3. [Quick Start](#quick-start)
+4. [Advanced Usage](#advanced-usage)
+5. [FAQ](#faq)
 
 ---
 
-## 配置文件结构
+## Overview
 
-配置文件位于: `config/model_config.yaml`
+This project supports a flexible model configuration system that allows you to specify different LLM models for each Agent.
 
-### 1. 全局配置
+### Key Features
+
+- ✅ **Configuration-Driven**: Centrally manage all model configurations through a YAML file
+- ✅ **Automatic Routing**: Automatically select the appropriate model based on the Agent name
+- ✅ **Multi-Model Support**: Simultaneously supports vision models (Qwen-VL) and text-only models (GPT-OSS)
+- ✅ **Flexible Override**: Supports dynamic model specification at runtime
+- ✅ **Parameter Customization**: Configure independent parameters (temperature, max_tokens, etc.) for each model
+
+---
+
+## Configuration File Structure
+
+The configuration file is located at: `config/model_config.yaml`
+
+### 1. Global Configuration
 
 ```yaml
 global:
@@ -36,18 +36,18 @@ global:
   api_timeout: 120
   media_base_url: "http://192.168.8.17:8866"
 
-  # 视频/图像参数
+  # Video/image parameters
   video_max_pixels: 163840  # 32*32*160
   image_max_pixels: 4096    # 64*64
   video_fps: 1.0
   max_video_count: 4
 ```
 
-### 2. 模型定义
+### 2. Model Definition
 
 ```yaml
 models:
-  # 视觉模型 (Qwen-VL)
+  # Vision model (Qwen-VL)
   qwen_vl:
     name: "qwen3vl_235b_2507"
     base_url: "http://192.168.8.17:9011/v1"
@@ -60,7 +60,7 @@ models:
           fps: 1
           do_sample_frames: true
 
-  # 纯文本模型 (GPT-OSS)
+  # Text-only model (GPT-OSS)
   gpt_oss:
     name: "gpt_oss_120b"
     base_url: "http://192.168.8.17:9001/v1"
@@ -70,16 +70,16 @@ models:
       max_tokens: 8192
 ```
 
-### 3. Agent 模型映射
+### 3. Agent Model Mapping
 
 ```yaml
 agent_models:
-  # 纯文本类 Agent
+  # Text-only Agents
   triage: gpt_oss
   time_calc: gpt_oss
   summary: gpt_oss
 
-  # 视觉类 Agent
+  # Vision Agents
   hemorrhage: qwen_vl
   ncct_imaging: qwen_vl
   aneurysm: qwen_vl
@@ -87,45 +87,45 @@ agent_models:
 
 ---
 
-## 快速开始
+## Quick Start
 
-### 方式 1: 使用默认配置 (推荐)
+### Method 1: Use Default Configuration (Recommended)
 
-Agent 会根据名称自动选择模型:
+The Agent automatically selects the model based on its name:
 
 ```python
 from agents.react_agent import ReActClinicalAgent
 
-# 自动使用配置文件中的映射
+# Automatically uses the mapping from the configuration file
 agent = ReActClinicalAgent("01_triage_agent.md")
 result = agent.run(video_paths, context, logger)
 ```
 
-### 方式 2: 指定模型键名
+### Method 2: Specify Model Key
 
 ```python
-# 强制使用 GPT-OSS 模型
+# Force use of GPT-OSS model
 agent = ReActClinicalAgent("01_triage_agent.md", model_key="gpt_oss")
 
-# 强制使用 Qwen-VL 模型
+# Force use of Qwen-VL model
 agent = ReActClinicalAgent("02_hemorrhage_agent.md", model_key="qwen_vl")
 ```
 
-### 方式 3: 直接调用 LLM
+### Method 3: Direct LLM Call
 
 ```python
 from utils.llm_client import call_llm_with_config
 
-# 根据 agent 名称自动选择
+# Automatic selection based on agent name
 response = call_llm_with_config(
-    prompt_text="分析这个病例...",
+    prompt_text="Analyze this case...",
     agent_name="triage",
     logger=logger
 )
 
-# 指定模型键名
+# Specify model key
 response = call_llm_with_config(
-    prompt_text="分析这个影像...",
+    prompt_text="Analyze this image...",
     model_key="qwen_vl",
     video_path="/path/to/video.mp4",
     logger=logger
@@ -134,15 +134,15 @@ response = call_llm_with_config(
 
 ---
 
-## 高级用法
+## Advanced Usage
 
-### 1. 添加新模型
+### 1. Adding a New Model
 
-在 `config/model_config.yaml` 中添加:
+Add to `config/model_config.yaml`:
 
 ```yaml
 models:
-  # 新增模型
+  # New model
   claude_sonnet:
     name: "claude-sonnet-4"
     base_url: "https://api.anthropic.com/v1"
@@ -152,27 +152,27 @@ models:
       max_tokens: 4096
 ```
 
-### 2. 为 Agent 指定新模型
+### 2. Assign a New Model to an Agent
 
 ```yaml
 agent_models:
-  director: claude_sonnet  # Director Agent 使用 Claude
-  summary: claude_sonnet   # Summary Agent 使用 Claude
+  director: claude_sonnet  # Director Agent uses Claude
+  summary: claude_sonnet   # Summary Agent uses Claude
 ```
 
-### 3. 运行时覆盖参数
+### 3. Override Parameters at Runtime
 
 ```python
 response = call_llm_with_config(
     prompt_text="...",
     agent_name="triage",
-    temperature=0.9,      # 覆盖默认 temperature
-    max_tokens=2048,      # 覆盖默认 max_tokens
+    temperature=0.9,      # Override default temperature
+    max_tokens=2048,      # Override default max_tokens
     logger=logger
 )
 ```
 
-### 4. 使用环境变量
+### 4. Using Environment Variables
 
 ```python
 import os
@@ -184,70 +184,70 @@ config_loader = get_config_loader(os.environ['MODEL_CONFIG_PATH'])
 
 ---
 
-## 常见问题
+## FAQ
 
-### Q1: 如何查看当前使用的模型?
+### Q1: How to check which model is currently in use?
 
-查看日志输出:
+Check the log output:
 ```
-[模型选择] Agent: triage, Model: gpt_oss_120b (text)
+[Model Selection] Agent: triage, Model: gpt_oss_120b (text)
 ```
 
-### Q2: 如何为所有 Agent 切换模型?
+### Q2: How to switch models for all Agents?
 
-修改 `config/model_config.yaml` 中的 `default_model`:
+Modify `default_model` in `config/model_config.yaml`:
 
 ```yaml
-default_model: gpt_oss  # 默认使用 GPT-OSS
+default_model: gpt_oss  # Use GPT-OSS by default
 ```
 
-### Q3: 视觉模型和文本模型有什么区别?
+### Q3: What is the difference between vision models and text models?
 
-- **视觉模型** (`type: vision`): 支持图像/视频输入，使用 `List[Dict]` 格式的 content
-- **文本模型** (`type: text`): 仅支持文本输入，使用纯字符串 content
+- **Vision model** (`type: vision`): Supports image/video input, uses `List[Dict]` format for content
+- **Text model** (`type: text`): Only supports text input, uses plain string content
 
-系统会自动处理格式差异。
+The system automatically handles format differences.
 
-### Q4: 如何调试模型调用?
+### Q4: How to debug model calls?
 
-启用详细日志:
+Enable verbose logging:
 
 ```python
 import logging
 logging.basicConfig(level=logging.DEBUG)
 ```
 
-### Q5: 配置文件修改后需要重启吗?
+### Q5: Do I need to restart after modifying the configuration file?
 
-是的，配置文件在程序启动时加载。修改后需要重启应用。
+Yes, the configuration file is loaded when the program starts. You need to restart the application after making changes.
 
 ---
 
-## 配置示例
+## Configuration Examples
 
-### 示例 1: 混合使用多个模型
+### Example 1: Using Multiple Models in Combination
 
 ```yaml
 agent_models:
-  # 快速响应的 Agent 使用轻量模型
+  # Agents requiring fast responses use lightweight models
   triage: gpt_oss
   time_calc: gpt_oss
 
-  # 复杂分析的 Agent 使用强大模型
+  # Agents performing complex analysis use powerful models
   hemorrhage: qwen_vl
   director: claude_sonnet
 ```
 
-### 示例 2: 开发/生产环境切换
+### Example 2: Development/Production Environment Switching
 
-开发环境 (`config/model_config.dev.yaml`):
+Development environment (`config/model_config.dev.yaml`):
 ```yaml
 models:
   qwen_vl:
     base_url: "http://localhost:9011/v1"
 ```
 
-生产环境 (`config/model_config.prod.yaml`):
+Production environment (`config/model_config.prod.yaml`):
 ```yaml
 models:
   qwen_vl:
@@ -256,9 +256,9 @@ models:
 
 ---
 
-## 技术支持
+## Technical Support
 
-如有问题，请查看:
-- 配置文件: `config/model_config.yaml`
-- 源代码: `utils/llm_client.py`
-- 配置加载器: `config/model_config_loader.py`
+If you have questions, please refer to:
+- Configuration file: `config/model_config.yaml`
+- Source code: `utils/llm_client.py`
+- Configuration loader: `config/model_config_loader.py`

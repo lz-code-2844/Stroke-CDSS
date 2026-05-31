@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-取栓知识库 (Thrombectomy Knowledge Base)
+Thrombectomy Knowledge Base
 
-检索取栓相关的文献证据
+Retrieves thrombectomy-related literature evidence
 """
 
 from typing import Dict, List
@@ -11,7 +11,7 @@ from .base_kb import BaseKnowledgeBase
 
 
 class ThrombectomyKB(BaseKnowledgeBase):
-    """取栓知识库"""
+    """Thrombectomy Knowledge Base"""
 
     def __init__(self, vector_store, embedder):
         super().__init__(
@@ -22,23 +22,23 @@ class ThrombectomyKB(BaseKnowledgeBase):
 
     def build_query(self, context: Dict) -> str:
         """
-        构建取栓相关查询
+        Build thrombectomy-related query
 
-        关键信息：
-        - LVO位置（ICA/M1/M2/基底动脉）
-        - NIHSS评分
-        - 时间窗
-        - 影像指标（ASPECTS、梗死核心）
+        Key information:
+        - LVO location (ICA/M1/M2/basilar artery)
+        - NIHSS score
+        - Time window
+        - Imaging indicators (ASPECTS, infarct core)
         """
         query_parts = ["endovascular thrombectomy mechanical thrombectomy"]
 
-        # 血管闭塞位置
+        # Vessel occlusion location
         if 'lvo_output' in context:
             lvo_info = context['lvo_output']
             if isinstance(lvo_info, str) and any(v in lvo_info for v in ['ICA', 'M1', 'M2', 'basilar']):
                 query_parts.append(f"{lvo_info} occlusion")
 
-        # NIHSS评分范围
+        # NIHSS score range
         if 'nihss_score' in context:
             try:
                 nihss = int(context['nihss_score'])
@@ -49,7 +49,7 @@ class ThrombectomyKB(BaseKnowledgeBase):
             except:
                 pass
 
-        # 时间窗
+        # Time window
         if 'onset_time_category' in context:
             time_cat = context['onset_time_category']
             if '6h' in time_cat or '<6' in time_cat:
@@ -57,7 +57,7 @@ class ThrombectomyKB(BaseKnowledgeBase):
             elif '6-24' in time_cat:
                 query_parts.append("extended time window DAWN DEFUSE")
 
-        # ASPECTS评分
+        # ASPECTS score
         if 'aspects_score' in context:
             try:
                 aspects = int(context['aspects_score'])
@@ -72,31 +72,31 @@ class ThrombectomyKB(BaseKnowledgeBase):
 
     def format_results(self, results: List[Dict]) -> str:
         """
-        格式化为prompt文本（完整版，包含摘要）
+        Format as prompt text (full version with abstracts)
 
-        格式：
-        【取栓文献证据】
-        1. [标题]
-           PMID: xxx | 期刊: xxx | 年份: xxx
-           摘要: [完整摘要内容]
-           关键结论: [关键结论]
+        Format:
+        [Thrombectomy Literature Evidence]
+        1. [Title]
+           PMID: xxx | Journal: xxx | Year: xxx
+           Abstract: [Full abstract content]
+           Key Conclusion: [Key conclusion]
         """
         if not results:
-            return "【取栓文献证据】\n未找到相关文献。"
+            return "[Thrombectomy Literature Evidence]\nNo relevant literature found."
 
-        formatted = ["【取栓文献证据】"]
+        formatted = ["[Thrombectomy Literature Evidence]"]
 
-        for idx, result in enumerate(results[:3], 1):  # 只取前3篇
+        for idx, result in enumerate(results[:3], 1):  # Take only the first 3
             metadata = result.get('metadata', {})
             title = metadata.get('title', 'No title')
             pmid = metadata.get('pmid', 'N/A')
             journal = metadata.get('journal', 'N/A')
             year = metadata.get('year', 'N/A')
 
-            # 优先从metadata获取完整摘要（这是原始完整摘要）
+            # Prefer getting full abstract from metadata (original full abstract)
             abstract = metadata.get('abstract', '')
 
-            # 如果metadata中没有，才尝试从document解析
+            # If not in metadata, try parsing from document
             if not abstract:
                 document = result.get('document', '')
                 if 'Abstract:' in document:
@@ -106,24 +106,24 @@ class ThrombectomyKB(BaseKnowledgeBase):
                 else:
                     abstract = document
 
-            # 清理摘要内容
+            # Clean abstract content
             abstract = str(abstract).strip()
-            # 移除可能的"nan"字符串
+            # Remove possible "nan" string
             if abstract.lower() == 'nan':
                 abstract = ""
 
-            # 限制摘要长度（1500字符，保证足够详细但不过长）
+            # Limit abstract length (1500 chars, detailed enough but not too long)
             if len(abstract) > 1500:
                 abstract = abstract[:1497] + "..."
 
-            # 关键结论（如果有）
+            # Key conclusion (if available)
             key_findings = metadata.get('key_findings', '')
-            conclusion_line = f"\n   关键结论: {key_findings}" if key_findings else ""
+            conclusion_line = f"\n   Key conclusion: {key_findings}" if key_findings else ""
 
             formatted.append(
                 f"\n{idx}. {title}\n"
-                f"   PMID: {pmid} | 期刊: {journal} | 年份: {year}\n"
-                f"   摘要: {abstract or '[无摘要]'}{conclusion_line}"
+                f"   PMID: {pmid} | Journal: {journal} | Year: {year}\n"
+                f"   Abstract: {abstract or '[No abstract]'}{conclusion_line}"
             )
 
         return "\n".join(formatted)

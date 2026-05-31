@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-知识库基类
+Knowledge Base Base Class
 
-定义统一的知识库接口
+Defines unified knowledge base interface
 """
 
 from abc import ABC, abstractmethod
@@ -13,19 +13,19 @@ from rag.embedder import EmbeddingService
 
 
 class BaseKnowledgeBase(ABC):
-    """知识库基类"""
+    """Knowledge Base Base Class"""
 
     def __init__(self,
                  collection_name: str,
                  vector_store: VectorStore,
                  embedder: EmbeddingService):
         """
-        初始化知识库
+        Initialize knowledge base
 
         Args:
-            collection_name: 向量库collection名称
-            vector_store: 向量存储实例
-            embedder: Embedding服务实例
+            collection_name: Vector store collection name
+            vector_store: Vector store instance
+            embedder: Embedding service instance
         """
         self.collection_name = collection_name
         self.vector_store = vector_store
@@ -36,20 +36,20 @@ class BaseKnowledgeBase(ABC):
                top_k: int = 5,
                filters: Optional[Dict] = None) -> List[Dict]:
         """
-        检索相关文献
+        Retrieve relevant literature
 
         Args:
-            query: 查询文本
-            top_k: 返回top-k个结果
-            filters: 元数据过滤条件（如year、journal等）
+            query: Query text
+            top_k: Return top-k results
+            filters: Metadata filter conditions (e.g. year, journal)
 
         Returns:
-            检索结果列表
+            List of retrieval results
         """
-        # 生成查询向量
+        # Generate query embedding
         query_embedding = self.embedder.embed(query)[0]
 
-        # 向量检索
+        # Vector retrieval
         results = self.vector_store.search(
             collection_name=self.collection_name,
             query_embedding=query_embedding,
@@ -57,7 +57,7 @@ class BaseKnowledgeBase(ABC):
             where=filters
         )
 
-        # 格式化结果
+        # Format results
         formatted_results = []
         if results and 'documents' in results:
             for i in range(len(results['documents'][0])):
@@ -73,47 +73,47 @@ class BaseKnowledgeBase(ABC):
     @abstractmethod
     def build_query(self, context: Dict) -> str:
         """
-        根据上下文构建查询字符串（需子类实现）
+        Build query string based on context (to be implemented by subclass)
 
         Args:
-            context: 患者上下文信息
+            context: Patient context information
 
         Returns:
-            查询字符串
+            Query string
         """
         pass
 
     @abstractmethod
     def format_results(self, results: List[Dict]) -> str:
         """
-        格式化检索结果为prompt可用的文本（需子类实现）
+        Format retrieval results as prompt-usable text (to be implemented by subclass)
 
         Args:
-            results: 检索结果
+            results: Retrieval results
 
         Returns:
-            格式化的文本
+            Formatted text
         """
         pass
 
     def retrieve_for_agent(self, context: Dict, top_k: int = 3) -> str:
         """
-        为Agent提供检索服务（完整流程）
+        Provide retrieval service for Agent (full pipeline)
 
         Args:
-            context: 患者上下文
-            top_k: 返回top-k个结果
+            context: Patient context
+            top_k: Return top-k results
 
         Returns:
-            格式化的检索结果文本
+            Formatted retrieval result text
         """
-        # 1. 构建查询
+        # 1. Build query
         query = self.build_query(context)
 
-        # 2. 检索
+        # 2. Retrieve
         results = self.search(query, top_k=top_k)
 
-        # 3. 格式化
+        # 3. Format
         formatted_text = self.format_results(results)
 
         return formatted_text

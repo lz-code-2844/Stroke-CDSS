@@ -40,22 +40,22 @@ Determination logic:
 
 ### 2.2 Handling of Vague Quantifiers:
 
-- "余 / 多" (Over / Plus)
+- "Over / Plus"
   - Clinical meaning: clearly exceeds the preceding time point
   - Determination strategy: ensure the estimated value crosses the critical time window
-    - 1天余 (over 1 day) → 25 hours (logically must be >24h)
-    - 3小时余 (over 3 hours) → 3.5 hours
+    - over 1 day → 25 hours (logically must be >24h)
+    - over 3 hours → 3.5 hours
   - Purpose: ensure the value falls into the correct time window interval (rather than pursuing precision)
 
-- "半" (Half)
+- "Half"
   - Determination strategy: 0.5 units
-    - 1天半 (1.5 days) → 36 hours
-    - 半小时 (half an hour) → 0.5 hours
+    - 1.5 days → 36 hours
+    - half an hour → 0.5 hours
 
-- "左右 / 许" (Approx)
+- "Approx"
   - Clinical meaning: fluctuation around the stated value
   - Determination strategy: use the central value, but note the uncertainty in the analysis
-    - 3小时左右 (around 3 hours) → 3.0 hours
+    - around 3 hours → 3.0 hours
 
 ## Step 3: Unit Standardization
 - Convert all times to hours
@@ -92,7 +92,7 @@ Based on the time analysis results, determine which treatment time window the pa
 - Wake-up / Beyond window: Duration > 24 hours or final_hours = 999 → Treat as beyond window or requiring imaging-based selection (DAWN / DEFUSE-3)
 
 # Special Notes
-- "Over 1 day" (1天余) in clinical semantics is absolutely >24h, therefore the 24h window must be "No"
+- "Over 1 day" in clinical semantics is absolutely >24h, therefore the 24h window must be "No"
 - final_hours = 999 represents unknown time; all time window questions should be answered "No"
 
 # Required Output

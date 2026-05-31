@@ -14,32 +14,32 @@ from utils.rag_engine import SimpleRAG
 from agents.react_agent import ReActClinicalAgent
 
 # ================= RAG ENHANCEMENT (New) =================
-# 自动选择最强的 RAG 版本
+# Auto-select the strongest RAG version
 RAG_COORDINATOR = None
 RAG_AVAILABLE = False
 RAG_VERSION = "None"
 
-# 优先级1: 混合检索 RAG (最强)
+# Priority 1: Hybrid Retrieval RAG (strongest)
 try:
     from rag.hybrid_coordinator import HybridRAGCoordinator
-    RAG_COORDINATOR = None  # 延迟初始化
+    RAG_COORDINATOR = None  # Lazy initialization
     RAG_AVAILABLE = True
     RAG_VERSION = "Hybrid (Semantic + BM25 + Reranking)"
-    # 静默加载，不在终端显示
+    # Silent loading, no terminal output
 except ImportError:
     pass
 
-# 优先级2: Simple RAG (TF-IDF)
+# Priority 2: Simple RAG (TF-IDF)
 if not RAG_AVAILABLE:
     try:
         from rag.simple_coordinator import RAGCoordinator
         RAG_COORDINATOR = None
         RAG_AVAILABLE = True
         RAG_VERSION = "Simple (TF-IDF)"
-        # 静默加载
+        # Silent loading
     except ImportError as e:
         RAG_AVAILABLE = False
-        # 静默处理，不在终端显示
+        # Silent handling, no terminal output
 
 # ================= CONFIGURATION =================
 EXCEL_PATH = "/data/qunhui_21T/Yan-20250730/code/agent_project_v6/data/experiment_data1.xlsx"
@@ -47,14 +47,14 @@ OUTPUT_PATH = "/data/qunhui_21T/Yan-20250730/code/agent_project_v6/results_v6_da
 JSON_OUTPUT_PATH = "/data/qunhui_21T/Yan-20250730/code/agent_project_v6/results_v6_data1/final_results.xlsx"
 DETAILED_LOGS_DIR = "/data/qunhui_21T/Yan-20250730/code/agent_project_v6/results_v6_data1/detailed_logs"
 ROOT_DIR = "/data/qunhui_21T/Yan-20250730/code/agent_project_v6"
-# 并行配置
-MAX_WORKERS = 10  # 并行处理的最大进程数
+# Parallel configuration
+MAX_WORKERS = 10  # Maximum number of parallel worker processes
 
 # ================= LOGGING SETUP =================
 
 def get_patient_logger(patient_id, logs_dir):
     """
-    为每个患者创建独立的日志记录器，输出到 patient_id.log 文件。
+    Create an independent logger for each patient, outputting to patient_id.log file.
     """
     safe_pid = str(patient_id).replace('/', '_').replace('\\', '_').replace(' ', '_')
     log_file = os.path.join(logs_dir, f"{safe_pid}.log")
@@ -62,7 +62,7 @@ def get_patient_logger(patient_id, logs_dir):
     logger = logging.getLogger(f"patient_{safe_pid}")
     logger.setLevel(logging.INFO)
     
-    # 清除已有的handlers，避免重复
+    # Clear existing handlers to avoid duplication
     logger.handlers = []
     
     file_handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
@@ -79,37 +79,39 @@ def get_patient_logger(patient_id, logs_dir):
 # ================= HELPER FUNCTIONS =================
 
 def get_agents():
-    """创建Agent实例（每个进程需要独立创建）"""
+    """Create Agent instances (each process needs its own instances).
+    See prompts/README.md for the paper agent name mapping (Supplementary Table S1).
+    """
     return {
-        # --- Step 0 & 1: 基础/分诊/出血 (Common) ---
+        # --- Step 0 & 1: Triage/Hemorrhage (Common) ---
         'triage': ReActClinicalAgent(f"{ROOT_DIR}/prompts/01_triage_agent.md"),
         'time_calc': ReActClinicalAgent(f"{ROOT_DIR}/prompts/03_time_calc_agent.md"),
         'hemorrhage': ReActClinicalAgent(f"{ROOT_DIR}/prompts/02_hemorrhage_agent.md"),
-        
-        # --- Branch A: 出血路径专用 ---
+
+        # --- Branch A: Hemorrhage Pathway ---
         'aneurysm': ReActClinicalAgent(f"{ROOT_DIR}/prompts/04_aneurysm_agent.md"),
-        
-        # --- Branch B: 缺血路径专用 (Ischemic) ---
+
+        # --- Branch B: Ischemic Pathway ---
         'lvo': ReActClinicalAgent(f"{ROOT_DIR}/prompts/05_lvo_agent.md"),
         'ncct_imaging': ReActClinicalAgent(f"{ROOT_DIR}/prompts/07a_ncct_imaging_agent.md"),
         'cta_imaging': ReActClinicalAgent(f"{ROOT_DIR}/prompts/07b_cta_imaging_agent.md"),
         'ctp_imaging': ReActClinicalAgent(f"{ROOT_DIR}/prompts/07c_ctp_imaging_agent.md"),
-        'imaging_validation': ReActClinicalAgent(f"{ROOT_DIR}/prompts/07_imaging_agent.md"),  # 影像综合整合
+        'imaging_validation': ReActClinicalAgent(f"{ROOT_DIR}/prompts/07_imaging_agent.md"),  # Imaging integration
         'nihss_scorer': ReActClinicalAgent(f"{ROOT_DIR}/prompts/11_nihss_scorer.md"),
         'fact_extractor': ReActClinicalAgent(f"{ROOT_DIR}/prompts/12_fact_extractor.md"),
         'consistency_check': ReActClinicalAgent(f"{ROOT_DIR}/prompts/13_consistency_check.md"),
-        'indication': ReActClinicalAgent(f"{ROOT_DIR}/prompts/08_indication_agent.md"), # [新增] 指征筛查Agent
-        
-        # --- Step 4: 总控 (Common Exit) ---
+        'indication': ReActClinicalAgent(f"{ROOT_DIR}/prompts/08_indication_agent.md"),
+
+        # --- Step 4: Director (Common Exit) ---
         'director': ReActClinicalAgent(f"{ROOT_DIR}/prompts/14_director_agent.md"),
     }
 
 def parse_json_from_output(text):
-    """从Agent输出中提取JSON格式的决策结果。"""
+    """Extract JSON-formatted decision results from Agent output."""
     if not isinstance(text, str):
         return None
     
-    # 尝试提取 markdown json 代码块
+    # Try extracting markdown JSON code block
     json_pattern = re.compile(r'```json\s*([\s\S]*?)\s*```', re.IGNORECASE)
     match = json_pattern.search(text)
     if match:
@@ -118,13 +120,13 @@ def parse_json_from_output(text):
         except json.JSONDecodeError:
             pass
     
-    # 尝试直接解析
+    # Try direct parsing
     try:
         return json.loads(text)
     except json.JSONDecodeError:
         pass
     
-    # 尝试截取 {}
+    # Try extracting {}
     start = text.find('{')
     end = text.rfind('}')
     if start != -1 and end != -1 and end > start:
@@ -136,11 +138,11 @@ def parse_json_from_output(text):
     return None
 
 def parse_agent_decision(text, target_q="Q2"):
-    """[升级版解析器] 尝试从JSON或文本中提取 Yes/No 答案"""
+    """[Enhanced Parser] Attempt to extract Yes/No answers from JSON or text"""
     if not isinstance(text, str):
         return False
     
-    # 1. 优先尝试 JSON
+    # 1. Try JSON first
     json_result = parse_json_from_output(text)
     if json_result and target_q in json_result:
         answer = str(json_result[target_q]).lower()
@@ -149,8 +151,8 @@ def parse_agent_decision(text, target_q="Q2"):
         if "否" in answer or "no" in answer or answer == "false":
             return False
 
-    # 2. 正则匹配 "Q2.....(是/否)"
-    pattern = re.compile(rf"{target_q}.*?([是否YesNo])", re.IGNORECASE | re.DOTALL)
+    # 2. Regex match "Q2.....(Yes/No)"
+    pattern = re.compile(rf"{target_q}.*?([YesNo是否])", re.IGNORECASE | re.DOTALL)
     match = pattern.search(text)
 
     if match:
@@ -158,7 +160,7 @@ def parse_agent_decision(text, target_q="Q2"):
         if "是" in answer or "y" in answer: return True
         if "否" in answer or "n" in answer: return False
 
-    # 3. 文本截取模糊匹配
+    # 3. Text-based fuzzy matching
     try:
         if target_q in text:
             part = text.split(target_q)[1]
@@ -167,14 +169,14 @@ def parse_agent_decision(text, target_q="Q2"):
     except:
         pass
 
-    # 4. 兜底
+    # 4. Fallback
     if "是" in text or "yes" in text.lower():
         return True
 
     return False
 
 def parse_numeric_value(text, target_q):
-    """从Agent输出中提取数值型答案"""
+    """Extract numeric answer from Agent output"""
     if not isinstance(text, str):
         return None
     
@@ -195,14 +197,14 @@ def parse_numeric_value(text, target_q):
     return None
 
 def parse_standard_choices(text):
-    """专门为Director解析A/B/C/D/E选项（E为动脉夹层特殊处理）"""
+    """Parse A/B/C/D/E options for Director (E is special handling for arterial dissection)"""
     json_res = parse_json_from_output(text)
     if json_res and "closed_outcome" in json_res:
         return json_res["closed_outcome"].get("best_option_code", "N/A")
     return "N/A"
 
 def parse_string_value(text, target_q):
-    """从Agent输出中提取字符串型答案"""
+    """Extract string answer from Agent output"""
     if not isinstance(text, str):
         return None
     
@@ -218,7 +220,7 @@ def split_video_paths(path_str):
     return [p.strip() for p in path_str.split(';') if p.strip()]
 
 def parse_ctp_tool_string(tool_str):
-    """解析CTP工具输出字符串"""
+    """Parse CTP tool output string"""
     data = {'tool_core_vol': 'N/A', 'tool_penumbra': 'N/A', 'tool_mismatch': 'N/A'}
     if not isinstance(tool_str, str):
         return data
@@ -232,12 +234,12 @@ def parse_ctp_tool_string(tool_str):
 
 def build_agent_context(row_data, agent_name, previous_outputs=None):
     """
-    根据不同Agent的需求，构建符合其prompt模板的上下文。
+    Build context matching the prompt template for each Agent type.
     """
     ctx = {}
     previous_outputs = previous_outputs or {}
     
-    # 1. 预先提取数据
+    # 1. Pre-extract data
     full_record = row_data.get('admission_record', 'N/A')
     chief_complaint_text = row_data.get('time_calc_source', 'N/A')
     
@@ -252,17 +254,17 @@ def build_agent_context(row_data, agent_name, previous_outputs=None):
     elif agent_name == 'time_calc':
         ctx['time_source_text'] = chief_complaint_text
     
-    # === Branch A: 出血路径 ===
+    # === Branch A: Hemorrhage Pathway ===
     elif agent_name == 'aneurysm':
         ctx['hemorrhage_output'] = previous_outputs.get('hemorrhage', 'N/A')
         ctx['cta_tool_raw'] = row_data.get('cta_tool_raw', 'N/A')
         ctx['chief_complaint'] = chief_complaint_text
 
-    # === Branch B: 缺血路径 ===
+    # === Branch B: Ischemic Pathway ===
     elif agent_name == 'lvo':
         ctx['cta_tool_raw'] = row_data.get('cta_tool_raw', 'N/A')
-        ctx['cta_tool_findings'] = row_data.get('cta_tool_findings', '无记录')
-        ctx['cta_imaging_output'] = previous_outputs.get('cta_imaging', 'CTA影像分析尚未执行或失败')
+        ctx['cta_tool_findings'] = row_data.get('cta_tool_findings', 'No record available')
+        ctx['cta_imaging_output'] = previous_outputs.get('cta_imaging', 'CTA imaging analysis not executed or failed')
         ctx['admission_record'] = full_record
         
     elif agent_name == 'ncct_imaging':
@@ -270,36 +272,36 @@ def build_agent_context(row_data, agent_name, previous_outputs=None):
         
     elif agent_name == 'cta_imaging':
         ctx['cta_tool_raw'] = row_data.get('cta_tool_raw', 'N/A')
-        ctx['cta_tool_findings'] = row_data.get('cta_tool_findings', '无记录')
-        ctx['ctp_feedback'] = previous_outputs.get('ctp_imaging', 'CTP尚未执行或无结果')
+        ctx['cta_tool_findings'] = row_data.get('cta_tool_findings', 'No record available')
+        ctx['ctp_feedback'] = previous_outputs.get('ctp_imaging', 'CTP not executed or no result')
         
     elif agent_name == 'ctp_imaging':
         ctx['ctp_tool_raw'] = row_data.get('ctp_tool_raw', 'N/A')
-        ctx['ctp_tool_findings'] = row_data.get('ctp_tool_findings', '无记录')
+        ctx['ctp_tool_findings'] = row_data.get('ctp_tool_findings', 'No record available')
 
-    # === 影像综合整合Agent: 整合07a/07b/07c结论 ===
+    # === Imaging Integration Agent: Merge 07a/07b/07c conclusions ===
     elif agent_name == 'imaging_validation':
-        ctx['ncct_result'] = previous_outputs.get('ncct_imaging', 'NCCT分析未执行')
-        ctx['cta_result'] = previous_outputs.get('cta_imaging', 'CTA分析未执行')
-        ctx['ctp_result'] = previous_outputs.get('ctp_imaging', 'CTP分析未执行')
+        ctx['ncct_result'] = previous_outputs.get('ncct_imaging', 'NCCT analysis not executed')
+        ctx['cta_result'] = previous_outputs.get('cta_imaging', 'CTA analysis not executed')
+        ctx['ctp_result'] = previous_outputs.get('ctp_imaging', 'CTP analysis not executed')
         ctx['tool_aspects'] = row_data.get('tool_aspects', 'N/A')
         ctx['cta_tool_raw'] = row_data.get('cta_tool_raw', 'N/A')
         ctx['ctp_tool_raw'] = row_data.get('ctp_tool_raw', 'N/A')
 
     elif agent_name == 'nihss_scorer':
-        # [修改] 优先读取专项列，vitals 映射至原文
+        # [Modified] Prioritize specialized columns, vitals mapped to original text
         ctx['neuro_exam'] = row_data.get('neuro_exam', 'N/A')
         ctx['vitals'] = row_data.get('vitals', full_record)
         ctx['admission_record'] = full_record
         
     elif agent_name == 'fact_extractor':
-        # [修改] vitals 和 labs_and_meds 按配置映射至原文
+        # [Modified] vitals and labs_and_meds mapped to original text per config
         ctx['admission_record'] = full_record
         ctx['labs_and_meds'] = row_data.get('labs_and_meds', full_record)
         ctx['vitals'] = row_data.get('vitals', full_record)
         
     elif agent_name == 'consistency_check':
-        ctx['vlm_findings'] = previous_outputs.get('vlm_findings', '影像分析未执行（可能因出血中止）')
+        ctx['vlm_findings'] = previous_outputs.get('vlm_findings', 'Imaging analysis not executed (possibly stopped due to hemorrhage)')
         ctx['admission_record'] = full_record
         ctx['neuro_exam'] = row_data.get('neuro_exam', full_record)
         ctx['rag_context'] = previous_outputs.get('rag_context', '')
@@ -307,28 +309,28 @@ def build_agent_context(row_data, agent_name, previous_outputs=None):
         ctx['cta_tool_raw'] = row_data.get('cta_tool_raw', 'N/A')
         ctx['ctp_tool_raw'] = row_data.get('ctp_tool_raw', 'N/A')
     
-    # [新增] 08 指征筛查
+    # [New] 08 Indication screening
     elif agent_name == 'indication':
         ctx['admission_record'] = full_record
         ctx['rag_context'] = previous_outputs.get('rag_context', '')
 
-    # === Step 4: 总控决策 ===
+    # === Step 4: Director Decision ===
     elif agent_name == 'director':
-        # [修改] 使用精简后的 Fact内容，不再使用 admission_record
+        # [Modified] Use condensed Fact content instead of admission_record
         ctx['fact_content'] = row_data.get('fact_content', 'N/A')
         ctx['tool_aspects'] = row_data.get('tool_aspects', 'N/A')
-        ctx['nihss_result'] = previous_outputs.get('nihss_scorer', '未执行')
-        ctx['imaging_consistency_result'] = previous_outputs.get('lvo', 'LVO判定未执行')
-        ctx['antithrombotic_facts'] = previous_outputs.get('fact_extractor', '未执行')
-        ctx['indication_result'] = previous_outputs.get('indication', '未执行指征筛查')
+        ctx['nihss_result'] = previous_outputs.get('nihss_scorer', 'Not executed')
+        ctx['imaging_consistency_result'] = previous_outputs.get('lvo', 'LVO determination not executed')
+        ctx['antithrombotic_facts'] = previous_outputs.get('fact_extractor', 'Not executed')
+        ctx['indication_result'] = previous_outputs.get('indication', 'Indication screening not executed')
 
-        # [新增] 传递一致性检查结果给Director
-        ctx['consistency_check_result'] = previous_outputs.get('consistency_check', '未执行一致性检查')
-        ctx['imaging_validation_result'] = previous_outputs.get('imaging_validation', '未执行影像整合')  # 影像综合整合结论
+        # [New] Pass consistency check result to Director
+        ctx['consistency_check_result'] = previous_outputs.get('consistency_check', 'Consistency check not executed')
+        ctx['imaging_validation_result'] = previous_outputs.get('imaging_validation', 'Imaging integration not executed')  # Imaging integration conclusion
 
         ctx['cta_tool_raw'] = row_data.get('cta_tool_raw', 'N/A')
-        ctx['is_in_ivt_window'] = previous_outputs.get('is_in_ivt_window', '否')
-        ctx['is_in_evt_window'] = previous_outputs.get('is_in_evt_window', '否')
+        ctx['is_in_ivt_window'] = previous_outputs.get('is_in_ivt_window', 'No')
+        ctx['is_in_evt_window'] = previous_outputs.get('is_in_evt_window', 'No')
         ctx['hemorrhage_result'] = previous_outputs.get('hemorrhage', 'N/A')
         ctx['aneurysm_result'] = previous_outputs.get('aneurysm', 'N/A')
         ctx['rag_context'] = previous_outputs.get('rag_context', '')
@@ -340,21 +342,21 @@ def build_agent_context(row_data, agent_name, previous_outputs=None):
 
 def get_video_paths_for_agent(agent_name, all_video_paths):
     """
-    根据Agent类型返回其需要的视频路径。
+    Return video paths needed by the Agent based on its type.
     """
-    # NCCT 类
+    # NCCT type
     if agent_name == 'hemorrhage' or agent_name == 'ncct_imaging':
         return {'ncct_path': all_video_paths.get('ncct_path', []), 'cta_path': [], 'ctp_path': []}
     
-    # CTA 类
+    # CTA type
     elif agent_name in ['aneurysm', 'cta_imaging']:
         return {'ncct_path': [], 'cta_path': all_video_paths.get('cta_path', []), 'ctp_path': []}
     
-    # CTP 类
+    # CTP type
     elif agent_name == 'ctp_imaging':
         return {'ncct_path': [], 'cta_path': [], 'ctp_path': all_video_paths.get('ctp_path', [])}
         
-    # 其他均为纯文本 Agent
+    # All others are text-only Agents
     return {'ncct_path': [], 'cta_path': [], 'ctp_path': []}
 
 def agent_call_with_log(agent_name, agent, video_paths, ctx, record_list, logger=None):
@@ -388,41 +390,41 @@ def rag_retrieve_with_log(rag_engine, key, record_list):
 
 def enhance_context_with_advanced_rag(agent_name, ctx, rag_coordinator, top_k=3, logger=None, log=None):
     """
-    使用高级RAG为指定Agent增强上下文（基于文献检索）
+    Enhance context for the specified Agent using advanced RAG (literature-based retrieval)
 
     Args:
-        agent_name: Agent名称
-        ctx: 上下文字典（会被修改）
-        rag_coordinator: RAGCoordinator实例
-        top_k: 返回文献数量
-        logger: 日志记录器
-        log: 患者日志字典（用于保存RAG结果到Excel）
+        agent_name: Agent name
+        ctx: Context dictionary (modified in-place)
+        rag_coordinator: RAGCoordinator instance
+        top_k: Number of literature results to return
+        logger: Logger instance
+        log: Patient log dictionary (for saving RAG results to Excel)
 
     Returns:
-        是否成功检索到文献
+        Whether literature was successfully retrieved
     """
     if not RAG_AVAILABLE or rag_coordinator is None:
         return False
 
     try:
-        # 映射agent名称到RAG系统识别的名称
+        # Map agent name to RAG system recognized name
         agent_mapping = {
-            'indication': 'thrombolysis_agent',  # 指征筛查用溶栓库
-            'ncct_imaging': 'ncct_imaging',      # 直接使用，让coordinator映射
-            'cta_imaging': 'cta_imaging',        # 直接使用，让coordinator映射
-            'ctp_imaging': 'ctp_imaging',        # 直接使用，让coordinator映射
-            'nihss_scorer': 'nihss_scorer',      # 直接使用，让coordinator映射
+            'indication': 'thrombolysis_agent',  # Indication screening uses thrombolysis KB
+            'ncct_imaging': 'ncct_imaging',      # Use directly, let coordinator map
+            'cta_imaging': 'cta_imaging',        # Use directly, let coordinator map
+            'ctp_imaging': 'ctp_imaging',        # Use directly, let coordinator map
+            'nihss_scorer': 'nihss_scorer',      # Use directly, let coordinator map
         }
 
-        # 对于取栓和溶栓直接使用原名
+        # For thrombectomy and thrombolysis, use original name
         rag_agent_name = agent_mapping.get(agent_name, agent_name + '_agent')
 
-        # 执行检索
+        # Execute retrieval
         literature = rag_coordinator.retrieve(rag_agent_name, ctx, top_k)
 
         if literature:
             ctx[f'rag_literature_{agent_name}'] = literature
-            # 保存RAG结果到log，以便输出到Excel
+            # Save RAG results to log for Excel output
             if log is not None:
                 log[f'RAG_{agent_name}'] = literature[:2000] if len(literature) > 2000 else literature
             if logger:
@@ -439,7 +441,7 @@ def enhance_context_with_advanced_rag(agent_name, ctx, rag_coordinator, top_k=3,
         return False
 
 def save_patient_results(pid, log, workflow_record, detailed_logs_dir):
-    """保存单个患者的结果到JSON和Excel文件。"""
+    """Save a single patient's results to JSON and Excel files."""
     os.makedirs(detailed_logs_dir, exist_ok=True)
     safe_pid = str(pid).replace('/', '_').replace('\\', '_').replace(' ', '_')
     
@@ -456,29 +458,29 @@ def save_patient_results(pid, log, workflow_record, detailed_logs_dir):
 
 def process_single_patient(row_data_dict, case_index, total_cases, detailed_logs_dir):
     """
-    新架构：条件工作流 (Conditional Workflow) + RAG Enhancement
+    New architecture: Conditional Workflow + RAG Enhancement
     """
-    # ========== 断点续跑检查 ==========
+    # ========== Checkpoint resume check ==========
     pid = row_data_dict.get('patient_id')
     if pid:
         json_file = os.path.join(detailed_logs_dir, f"{pid}.json")
         if os.path.exists(json_file):
-            # 读取已有结果并返回（静默跳过，不在终端显示）
+            # Read existing results and return (silent skip, no terminal output)
             try:
                 with open(json_file, 'r', encoding='utf-8') as f:
                     existing_record = json.load(f)
                     return existing_record.get('log', {}), existing_record, pid
             except:
-                pass  # 如果读取失败，继续重新处理
+                pass  # If read fails, continue to reprocess
 
     agents = get_agents()
-    rag_engine = SimpleRAG()  # 基础RAG（保留原有功能）
+    rag_engine = SimpleRAG()  # Basic RAG (preserves original functionality)
 
-    # 初始化高级RAG协调器（每个进程独立初始化）
+    # Initialize advanced RAG coordinator (independent per process)
     rag_coordinator = None
     if RAG_AVAILABLE:
         try:
-            # 自动选择最强的 RAG 版本
+            # Auto-select the strongest RAG version
             if RAG_VERSION.startswith("Hybrid"):
                 from rag.hybrid_coordinator import HybridRAGCoordinator
                 rag_coordinator = HybridRAGCoordinator()
@@ -486,7 +488,7 @@ def process_single_patient(row_data_dict, case_index, total_cases, detailed_logs
                 from rag.simple_coordinator import RAGCoordinator
                 rag_coordinator = RAGCoordinator()
         except Exception as e:
-            # 静默处理，记录到日志
+            # Silent handling, log internally
             pass
 
     pid = row_data_dict.get('patient_id')
@@ -510,7 +512,7 @@ def process_single_patient(row_data_dict, case_index, total_cases, detailed_logs
         'cta_path': split_video_paths(raw_data.get('cta_path')), 
         'ctp_path': split_video_paths(raw_data.get('ctp_path'))
     }
-    logger.info(f"   [Data] 视频检测: NCCT={len(all_video_paths['ncct_path'])}, CTA={len(all_video_paths['cta_path'])}, CTP={len(all_video_paths['ctp_path'])}")
+    logger.info(f"   [Data] Video detection: NCCT={len(all_video_paths['ncct_path'])}, CTA={len(all_video_paths['cta_path'])}, CTP={len(all_video_paths['ctp_path'])}")
 
     previous_outputs = {}
 
@@ -539,7 +541,7 @@ def process_single_patient(row_data_dict, case_index, total_cases, detailed_logs
     }
 
     try:
-        # === Step 0: 必查项 (Triage & Time) ===
+        # === Step 0: Mandatory Checks (Triage & Time) ===
         logger.info("▶ Step 0: Triage & Time Calculation...")
         
         t_out = agent_call_with_log('triage', agents['triage'], get_video_paths_for_agent('triage', all_video_paths), build_agent_context(raw_data, 'triage', previous_outputs), workflow_record["agent_step_records"], logger)
@@ -553,11 +555,11 @@ def process_single_patient(row_data_dict, case_index, total_cases, detailed_logs
         is_ivt_win = parse_agent_decision(time_out, "Q2")
         is_evt_win = parse_agent_decision(time_out, "Q3")
 
-        previous_outputs['onset_hours'] = onset_h if onset_h is not None else "未知"
-        previous_outputs['is_in_ivt_window'] = "是" if is_ivt_win else "否"
-        previous_outputs['is_in_evt_window'] = "是" if is_evt_win else "否"
+        previous_outputs['onset_hours'] = onset_h if onset_h is not None else "Unknown"
+        previous_outputs['is_in_ivt_window'] = "Yes" if is_ivt_win else "No"
+        previous_outputs['is_in_evt_window'] = "Yes" if is_evt_win else "No"
 
-        # === Step 1: 出血筛查 (Hemorrhage Check) ===
+        # === Step 1: Hemorrhage Screening ===
         logger.info("▶ Step 1: Hemorrhage Check...")
         h_out = agent_call_with_log('hemorrhage', agents['hemorrhage'], get_video_paths_for_agent('hemorrhage', all_video_paths), build_agent_context(raw_data, 'hemorrhage', previous_outputs), workflow_record["agent_step_records"], logger)
         log['Res_02_Hemorrhage'] = h_out
@@ -566,7 +568,7 @@ def process_single_patient(row_data_dict, case_index, total_cases, detailed_logs
         is_bleeding = parse_agent_decision(h_out, "Q2")
         
         if is_bleeding:
-            # Branch A: 出血处理流程
+            # Branch A: Hemorrhage Pathway
             logger.info("   🚨 [CRITICAL] Hemorrhage detected! Entering Hemorrhage Pathway...")
             log['Clinical_Pathway'] = 'Hemorrhage'
             
@@ -578,11 +580,11 @@ def process_single_patient(row_data_dict, case_index, total_cases, detailed_logs
             log['Res_12_Facts'] = fact_out
             previous_outputs['fact_extractor'] = fact_out
 
-            # [新增] 出血分支也执行指征筛查供Director参考
+            # [New] Hemorrhage branch also runs indication screening for Director reference
             rag_text = rag_engine.retrieve("thrombolysis") + "\n" + rag_engine.retrieve("thrombectomy")
             previous_outputs['rag_context'] = rag_text
 
-            # [RAG Enhancement] 为indication增强上下文
+            # [RAG Enhancement] Enhance context for indication
             ctx_indication = build_agent_context(raw_data, 'indication', previous_outputs)
             enhance_context_with_advanced_rag('indication', ctx_indication, rag_coordinator, top_k=2, logger=logger, log=log)
 
@@ -592,14 +594,14 @@ def process_single_patient(row_data_dict, case_index, total_cases, detailed_logs
             previous_outputs['indication'] = ind_out
 
         else:
-            # Branch B: 缺血处理流程
+            # Branch B: Ischemic Pathway
             logger.info("   ✅ No hemorrhage. Entering Ischemic Pathway...")
             log['Clinical_Pathway'] = 'Ischemic'
             
-            # 1. 缺血影像全家桶
+            # 1. Full ischemic imaging suite
             logger.info("   ▶ Sub-Step: Ischemic Imaging Suite...")
 
-            # [RAG Enhancement] 为影像Agent增强上下文
+            # [RAG Enhancement] Enhance context for imaging Agents
             ctx_ncct = build_agent_context(raw_data, 'ncct_imaging')
             enhance_context_with_advanced_rag('ncct_imaging', ctx_ncct, rag_coordinator, top_k=2, logger=logger, log=log)
             ncct_out = agent_call_with_log('ncct_imaging', agents['ncct_imaging'], get_video_paths_for_agent('ncct_imaging', all_video_paths), ctx_ncct, workflow_record["agent_step_records"], logger)
@@ -621,19 +623,19 @@ def process_single_patient(row_data_dict, case_index, total_cases, detailed_logs
             log['Res_05_LVO'] = lvo_out
             previous_outputs['lvo'] = lvo_out
 
-            # 影像综合整合
+            # Imaging integration
             logger.info("   ▶ Sub-Step: Imaging Integration...")
             ctx_validation = build_agent_context(raw_data, 'imaging_validation', previous_outputs)
             validation_out = agent_call_with_log('imaging_validation', agents['imaging_validation'], get_video_paths_for_agent('imaging_validation', all_video_paths), ctx_validation, workflow_record["agent_step_records"], logger)
             log['Res_07d_Integration'] = validation_out
             previous_outputs['imaging_validation'] = validation_out
 
-            # 整合各影像Agent结论
-            vlm_findings = f"【出血】:{h_out}\n【NCCT】:{ncct_out}\n【CTP】:{ctp_out}\n【CTA】:{cta_out}\n【LVO】:{lvo_out}\n【影像综合结论】:{validation_out}"
+            # Integrate conclusions from all imaging Agents
+            vlm_findings = f"[Hemorrhage]:{h_out}\n[NCCT]:{ncct_out}\n[CTP]:{ctp_out}\n[CTA]:{cta_out}\n[LVO]:{lvo_out}\n[Imaging Conclusion]:{validation_out}"
             previous_outputs['vlm_findings'] = vlm_findings
             log['Res_07_Imaging_Summary'] = vlm_findings[:3000]
 
-            # 2. 文本专员
+            # 2. Text analysis Agents
             logger.info("   ▶ Sub-Step: Text Analysis...")
             nihss_out = agent_call_with_log('nihss_scorer', agents['nihss_scorer'], {}, build_agent_context(raw_data, 'nihss_scorer', previous_outputs), workflow_record["agent_step_records"], logger)
             log['Res_11_NIHSS'] = nihss_out
@@ -643,7 +645,7 @@ def process_single_patient(row_data_dict, case_index, total_cases, detailed_logs
             log['Res_12_Facts'] = fact_out
             previous_outputs['fact_extractor'] = fact_out
 
-            # 3. 一致性校验与指征筛查
+            # 3. Consistency check and indication screening
             logger.info("   ▶ Sub-Step: Consistency & Indication Check...")
             rag_text = rag_engine.retrieve("thrombolysis") + "\n" + rag_engine.retrieve("thrombectomy")
             previous_outputs['rag_context'] = rag_text
@@ -652,7 +654,7 @@ def process_single_patient(row_data_dict, case_index, total_cases, detailed_logs
             log['Res_13_Consistency'] = cons_out
             previous_outputs['consistency_check'] = cons_out
 
-            # [新增+RAG Enhancement] 缺血分支执行指征筛查
+            # [New+RAG Enhancement] Ischemic branch runs indication screening
             ctx_indication = build_agent_context(raw_data, 'indication', previous_outputs)
             enhance_context_with_advanced_rag('indication', ctx_indication, rag_coordinator, top_k=3, logger=logger, log=log)
             ind_out = agent_call_with_log('indication', agents['indication'], {}, ctx_indication, workflow_record["agent_step_records"], logger)
@@ -660,7 +662,7 @@ def process_single_patient(row_data_dict, case_index, total_cases, detailed_logs
             previous_outputs['indication'] = ind_out
             previous_outputs['indication'] = ind_out
 
-        # === Step 4: 总控决策 ===
+        # === Step 4: Director Decision ===
         logger.info("▶ Step 4: Director Final Decision...")
         
         dir_out = agent_call_with_log('director', agents['director'], {}, build_agent_context(raw_data, 'director', previous_outputs), workflow_record["agent_step_records"], logger)
@@ -672,7 +674,7 @@ def process_single_patient(row_data_dict, case_index, total_cases, detailed_logs
                  rec = dir_json["sign_off"]["final_statement"]
             elif "final_statement" in dir_out:
                 match = re.search(r'"final_statement":\s*"(.*?)"', dir_out)
-                rec = match.group(1) if match else "见详细报告"
+                rec = match.group(1) if match else "See detailed report"
             else:
                 rec = "Director Output Generated"
             log['Final_Recommendation'] = rec
@@ -689,14 +691,14 @@ def process_single_patient(row_data_dict, case_index, total_cases, detailed_logs
                 sec_code = closed_data.get("secondary_option_code", "None")
                 sec_text = ""
                 if sec_code in ["A", "B", "C", "D"]:
-                    mapping = {"A": "溶栓治疗", "B": "取栓治疗或桥接治疗", "C": "保守治疗", "D": "其他疾病"}
+                    mapping = {"A": "Thrombolysis (IVT)", "B": "Thrombectomy or Bridging", "C": "Conservative Management", "D": "Other Disease"}
                     sec_text = mapping.get(sec_code, "")
 
                 reason = closed_data.get("reasoning", "")
                 parts = []
-                if code != "N/A": parts.append(f"首选【{code}】{text}")
-                if sec_code in ["A", "B", "C", "D"]: parts.append(f"次选【{sec_code}】{sec_text}")
-                if reason: parts.append(f"理由：{reason}")
+                if code != "N/A": parts.append(f"Primary [{code}] {text}")
+                if sec_code in ["A", "B", "C", "D"]: parts.append(f"Secondary [{sec_code}] {sec_text}")
+                if reason: parts.append(f"Reason: {reason}")
                 closed_rec = "\n".join(parts)
             
             log['closed_recommendation'] = closed_rec
@@ -714,8 +716,8 @@ def process_single_patient(row_data_dict, case_index, total_cases, detailed_logs
         logger.info(f"   ✅ Done: {log['closed_recommendation'].replace(chr(10), ' ')}")
 
     except Exception as e:
-        logger.error(f"   ❌ 处理患者 {pid} 时发生错误: {str(e)}")
-        log['Final_Recommendation'] = f"处理错误: {str(e)}"
+        logger.error(f"   ❌ Error processing patient {pid}: {str(e)}")
+        log['Final_Recommendation'] = f"Processing error: {str(e)}"
         workflow_record["error"] = str(e)
         save_patient_results(pid, log, workflow_record, detailed_logs_dir)
     
@@ -728,7 +730,7 @@ def process_patient_wrapper(args):
 # ================= MAIN WORKFLOW =================
 
 def run_experiment(parallel=True, max_workers=MAX_WORKERS, output_path=None):
-    # 如果没有指定输出路径，使用默认路径
+    # Use default output path if not specified
     if output_path is None:
         output_path = OUTPUT_PATH
 
@@ -739,13 +741,13 @@ def run_experiment(parallel=True, max_workers=MAX_WORKERS, output_path=None):
     all_workflow_records = []
     total_cases = len(df)
 
-    # 显示启动信息
+    # Display startup info
     print("="*60)
-    print(f"🚀 医学影像 AI 分析系统")
-    print(f"   总案例数: {total_cases}")
-    print(f"   并行处理: {'是' if parallel and max_workers > 1 else '否'} (workers={max_workers if parallel else 1})")
-    print(f"   RAG 模式: {RAG_VERSION if RAG_AVAILABLE else 'Disabled'}")
-    print(f"   日志目录: {DETAILED_LOGS_DIR}")
+    print(f"🚀 Medical Imaging AI Analysis System")
+    print(f"   Total cases: {total_cases}")
+    print(f"   Parallel: {'Yes' if parallel and max_workers > 1 else 'No'} (workers={max_workers if parallel else 1})")
+    print(f"   RAG Mode: {RAG_VERSION if RAG_AVAILABLE else 'Disabled'}")
+    print(f"   Log directory: {DETAILED_LOGS_DIR}")
     print("="*60)
     print()
 
@@ -760,7 +762,7 @@ def run_experiment(parallel=True, max_workers=MAX_WORKERS, output_path=None):
             futures = {executor.submit(process_patient_wrapper, task): task[0].get('patient_id') 
                       for task in tasks}
             
-            for future in tqdm(as_completed(futures), total=len(futures), desc="处理进度"):
+            for future in tqdm(as_completed(futures), total=len(futures), desc="Processing"):
                 pid = futures[future]
                 try:
                     log, workflow_record, _ = future.result()
@@ -769,20 +771,20 @@ def run_experiment(parallel=True, max_workers=MAX_WORKERS, output_path=None):
                 except Exception as e:
                     all_results.append({
                         'Patient_ID': pid,
-                        'Final_Recommendation': f'处理失败: {str(e)}'
+                        'Final_Recommendation': f'Processing failed: {str(e)}'
                     })
     else:
-        for task in tqdm(tasks, desc="处理进度"):
+        for task in tqdm(tasks, desc="Processing"):
             log, workflow_record, pid = process_patient_wrapper(task)
             all_results.append(log)
             all_workflow_records.append(workflow_record)
 
     pd.DataFrame(all_results).to_excel(output_path, index=False)
     print(f"\n{'='*60}")
-    print(f"✅ 处理完成!")
-    print(f"   总案例数: {total_cases}")
-    print(f"   结果文件: {output_path}")
-    print(f"   日志目录: {DETAILED_LOGS_DIR}")
+    print(f"✅ Processing complete!")
+    print(f"   Total cases: {total_cases}")
+    print(f"   Results file: {output_path}")
+    print(f"   Log directory: {DETAILED_LOGS_DIR}")
     print(f"{'='*60}")
     with open(JSON_OUTPUT_PATH, "w", encoding="utf-8") as json_log_fp:
         for record in all_workflow_records:
@@ -810,17 +812,17 @@ def run_single_patient(patient_id_or_index, excel_path=EXCEL_PATH):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description='CDSS临床决策工作流')
-    parser.add_argument('--single', type=str, default=None, 
-                       help='处理单个患者（指定patient_id或索引）')
+    parser = argparse.ArgumentParser(description='CDSS Clinical Decision Workflow')
+    parser.add_argument('--single', type=str, default=None,
+                       help='Process a single patient (specify patient_id or index)')
     parser.add_argument('--parallel', action='store_true', default=True,
-                       help='启用并行处理')
+                       help='Enable parallel processing')
     parser.add_argument('--no-parallel', action='store_false', dest='parallel',
-                       help='禁用并行处理')
+                       help='Disable parallel processing')
     parser.add_argument('--workers', type=int, default=MAX_WORKERS,
-                       help=f'并行处理的最大进程数 (默认: {MAX_WORKERS})')
+                       help=f'Max number of parallel worker processes (default: {MAX_WORKERS})')
     parser.add_argument('--output', type=str, default=None,
-                       help='自定义输出Excel文件路径 (默认: logs/final_experiment_results.xlsx)')
+                       help='Custom output Excel file path (default: logs/final_experiment_results.xlsx)')
     args = parser.parse_args()
     
     if args.single:

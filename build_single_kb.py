@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-RAG构建脚本 - 单个知识库版本
-每次只构建一个知识库，避免内存问题
+RAG Build Script - Single Knowledge Base Version
+Builds one knowledge base at a time to avoid memory issues
 """
 
 import os
@@ -11,23 +11,23 @@ import pickle
 from openpyxl import load_workbook
 
 def build_single_kb(excel_file, collection_name):
-    """构建单个知识库"""
+    """Build a single knowledge base"""
 
     print(f"\n{'='*60}")
     print(f"Building: {collection_name}")
     print(f"From: {excel_file}")
     print('='*60)
 
-    # 检查文件
+    # Check file
     if not os.path.exists(excel_file):
         print(f"❌ File not found: {excel_file}")
         return False
 
-    # 创建输出目录
+    # Create output directory
     output_dir = "knowledge_base/simple_rag"
     os.makedirs(output_dir, exist_ok=True)
 
-    # 加载Excel
+    # Load Excel
     print("\n[1/4] Loading Excel...")
     wb = load_workbook(excel_file, read_only=True, data_only=True)
     ws = wb.active
@@ -35,7 +35,7 @@ def build_single_kb(excel_file, collection_name):
 
     print(f"  Total rows: {ws.max_row - 1}")
 
-    # 读取数据
+    # Read data
     print("\n[2/4] Reading documents...")
     documents = []
     metadatas = []
@@ -47,11 +47,11 @@ def build_single_kb(excel_file, collection_name):
         row_values = [cell.value for cell in ws[row_idx]]
         doc_dict = dict(zip(headers, row_values))
 
-        # 检查必需字段
+        # Check required fields
         if not doc_dict.get('title') or not doc_dict.get('PMID'):
             continue
 
-        # 构建文档文本
+        # Build document text
         parts = []
         if doc_dict.get('title'):
             parts.append(str(doc_dict['title']))
@@ -75,7 +75,7 @@ def build_single_kb(excel_file, collection_name):
     wb.close()
     print(f"\n  ✓ Loaded {len(documents)} documents")
 
-    # 保存为pickle（不进行向量化，在使用时再做）
+    # Save as pickle (vectorization deferred to runtime)
     print("\n[3/4] Saving data...")
     output_file = os.path.join(output_dir, f"{collection_name}.pkl")
 
@@ -99,29 +99,29 @@ def build_single_kb(excel_file, collection_name):
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python build_single_kb.py <kb_number>")
-        print("  1 = thrombectomy (取栓)")
-        print("  2 = thrombolysis (溶栓)")
-        print("  3 = imaging_triage (影像分诊)")
-        print("  4 = imaging_scoring (影像评分)")
+        print("  1 = thrombectomy")
+        print("  2 = thrombolysis")
+        print("  3 = imaging_triage")
+        print("  4 = imaging_scoring")
         sys.exit(1)
 
     kb_num = sys.argv[1]
 
     configs = {
         '1': {
-            'file': 'knowledge_base/excel/20260128_002344_取栓数据库.xlsx',
+            'file': 'knowledge_base/excel/thrombectomy_db.xlsx',
             'name': 'thrombectomy_literature'
         },
         '2': {
-            'file': 'knowledge_base/excel/20260128_002344_溶栓数据库.xlsx',
+            'file': 'knowledge_base/excel/thrombolysis_db.xlsx',
             'name': 'thrombolysis_literature'
         },
         '3': {
-            'file': 'knowledge_base/excel/20260128_002344_影像分诊.xlsx',
+            'file': 'knowledge_base/excel/imaging_triage.xlsx',
             'name': 'imaging_triage_literature'
         },
         '4': {
-            'file': 'knowledge_base/excel/20260128_002344_影像评分.xlsx',
+            'file': 'knowledge_base/excel/imaging_scoring.xlsx',
             'name': 'imaging_scoring_literature'
         }
     }

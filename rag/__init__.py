@@ -1,11 +1,11 @@
 """
-RAG (Retrieval-Augmented Generation) 模块
+RAG (Retrieval-Augmented Generation) Module
 
-提供基于文献的知识检索功能，支持：
-- 取栓文献库 (Thrombectomy Literature)
-- 溶栓文献库 (Thrombolysis Literature)
-- 影像分诊文献 (Imaging Triage)
-- 影像评分文献 (Imaging Scoring)
+Provides literature-based knowledge retrieval, supporting:
+- Thrombectomy Literature
+- Thrombolysis Literature
+- Imaging Triage Literature
+- Imaging Scoring Literature
 """
 
 __version__ = "1.0.0"

@@ -128,12 +128,10 @@ result = process_patient(
 graph TD
     A[Patient Data] --> B{Triage Screening}
     B -->|Stroke| C{Hemorrhage Screening}
-    B -->|Non-Stroke| D[Path D: Other Diseases]
-    C -->|Hemorrhage| E{Aneurysm Detection}
+    B -->|Non-Stroke| D[Path D: Other Diseases / Hemorrhage Treatment]
+    C -->|Hemorrhage| D
     C -->|Ischemic| F{Time Window Calc}
-    E -->|Positive| G[Path D: Other Diseases]
-    E -->|Negative| H[Path C: Conservative]
-    F -->|>24h| H
+    F -->|>24h| H[Path C: Conservative]
     F -->|≤4.5h| I{LVO Screening}
     F -->|4.5-24h| J{Imaging Evaluation}
     I -->|No LVO| K[Path A: Thrombolysis]
@@ -153,7 +151,7 @@ graph TD
 | **A** | Thrombolysis Therapy (IVT) | Within 4.5h, no LVO or not eligible for thrombectomy |
 | **B** | Thrombectomy Therapy (EVT) | With LVO and eligible for thrombectomy, bridge or standalone |
 | **C** | Conservative Treatment | Beyond time window, contraindications, or non-ischemic stroke |
-| **D** | Other Diseases | Non-stroke etiology |
+| **D** | Other Diseases / Hemorrhage Treatment | Non-stroke etiology or hemorrhage detected by screening |
 
 ---
 

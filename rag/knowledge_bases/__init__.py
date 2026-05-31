@@ -1,5 +1,5 @@
 """
-专用知识库模块
+Specialized Knowledge Base Module
 """
 
 from .base_kb import BaseKnowledgeBase

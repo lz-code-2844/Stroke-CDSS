@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-溶栓知识库 (Thrombolysis Knowledge Base)
+Thrombolysis Knowledge Base
 
-检索溶栓(IVT)相关的文献证据
+Retrieves thrombolysis (IVT) related literature evidence
 """
 
 from typing import Dict, List
@@ -11,7 +11,7 @@ from .base_kb import BaseKnowledgeBase
 
 
 class ThrombolysisKB(BaseKnowledgeBase):
-    """溶栓知识库"""
+    """Thrombolysis Knowledge Base"""
 
     def __init__(self, vector_store, embedder):
         super().__init__(
@@ -22,16 +22,16 @@ class ThrombolysisKB(BaseKnowledgeBase):
 
     def build_query(self, context: Dict) -> str:
         """
-        构建溶栓相关查询
+        Build thrombolysis-related query
 
-        关键信息：
-        - 发病时间（< 4.5h）
-        - 禁忌症（出血、血压、血糖等）
-        - 年龄、NIHSS
+        Key information:
+        - Onset time (< 4.5h)
+        - Contraindications (hemorrhage, blood pressure, glucose, etc.)
+        - Age, NIHSS
         """
         query_parts = ["intravenous thrombolysis rtPA alteplase acute ischemic stroke"]
 
-        # 时间窗
+        # Time window
         if 'onset_to_arrival_hours' in context:
             try:
                 hours = float(context['onset_to_arrival_hours'])
@@ -42,11 +42,11 @@ class ThrombolysisKB(BaseKnowledgeBase):
             except:
                 pass
 
-        # 禁忌症检查
+        # Contraindication check
         if 'hemorrhage_detected' in context and context.get('hemorrhage_detected'):
             query_parts.append("intracranial hemorrhage contraindication")
 
-        # NIHSS评分
+        # NIHSS score
         if 'nihss_score' in context:
             try:
                 nihss = int(context['nihss_score'])
@@ -57,7 +57,7 @@ class ThrombolysisKB(BaseKnowledgeBase):
             except:
                 pass
 
-        # 年龄
+        # Age
         if 'age' in context:
             try:
                 age = int(context.get('age', 0))
@@ -69,11 +69,11 @@ class ThrombolysisKB(BaseKnowledgeBase):
         return " ".join(query_parts)
 
     def format_results(self, results: List[Dict]) -> str:
-        """格式化为prompt文本（完整版，包含摘要）"""
+        """Format as prompt text (full version with abstracts)"""
         if not results:
-            return "【溶栓文献证据】\n未找到相关文献。"
+            return "[Thrombolysis Literature Evidence]\nNo relevant literature found."
 
-        formatted = ["【溶栓文献证据】"]
+        formatted = ["[Thrombolysis Literature Evidence]"]
 
         for idx, result in enumerate(results[:3], 1):
             metadata = result.get('metadata', {})
@@ -82,10 +82,10 @@ class ThrombolysisKB(BaseKnowledgeBase):
             journal = metadata.get('journal', 'N/A')
             year = metadata.get('year', 'N/A')
 
-            # 优先从metadata获取完整摘要（这是原始完整摘要）
+            # Prefer getting full abstract from metadata (original full abstract)
             abstract = metadata.get('abstract', '')
 
-            # 如果metadata中没有，才尝试从document解析
+            # If not in metadata, try parsing from document
             if not abstract:
                 document = result.get('document', '')
                 if 'Abstract:' in document:
@@ -95,22 +95,22 @@ class ThrombolysisKB(BaseKnowledgeBase):
                 else:
                     abstract = document
 
-            # 清理摘要内容
+            # Clean abstract content
             abstract = str(abstract).strip()
             if abstract.lower() == 'nan':
                 abstract = ""
 
-            # 限制摘要长度（1500字符）
+            # Limit abstract length (1500 chars)
             if len(abstract) > 1500:
                 abstract = abstract[:1497] + "..."
 
             key_findings = metadata.get('key_findings', '')
-            conclusion_line = f"\n   关键结论: {key_findings}" if key_findings else ""
+            conclusion_line = f"\n   Key conclusion: {key_findings}" if key_findings else ""
 
             formatted.append(
                 f"\n{idx}. {title}\n"
-                f"   PMID: {pmid} | 期刊: {journal} | 年份: {year}\n"
-                f"   摘要: {abstract or '[无摘要]'}{conclusion_line}"
+                f"   PMID: {pmid} | Journal: {journal} | Year: {year}\n"
+                f"   Abstract: {abstract or '[No abstract]'}{conclusion_line}"
             )
 
         return "\n".join(formatted)

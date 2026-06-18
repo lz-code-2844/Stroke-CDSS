@@ -1,5 +1,4 @@
 # Outline_of_multi-agent_design
-# Supervisor and Agent Orchestration
 
 ## Supervisor and agent orchestration
 The multi-agent framework was organized around a supervisor agent that coordinated execution order, routing logic, and information flow across downstream agents. For each case, the supervisor first collected the available clinical, laboratory, and imaging inputs and then dispatched them to task-specific agents according to a predefined clinical workflow. The system followed a gated sequential design intended to mimic routine AIS emergency decision-making, such that later steps depended on the outputs.

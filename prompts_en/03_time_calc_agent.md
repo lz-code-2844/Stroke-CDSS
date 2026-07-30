@@ -14,7 +14,7 @@ Analyze the types of time descriptions in the text:
 
 - Clear onset time: e.g., "3 hours ago," "10 AM" (needs to be combined with the time of presentation; if no presentation time is available, assume the current time is the time of evaluation)
 - Wake-up stroke / Unknown time: e.g., "noticed upon waking," "found by family," "time unclear"
-- **Fluctuating symptom scenario (New)**: e.g., "recurrent episodes," "symptoms worsened," "reappeared," "waxing and waning," "fluctuating"
+- **Fluctuating symptom scenario**: e.g., "recurrent episodes," "symptoms worsened," "reappeared," "waxing and waning," "fluctuating"
 
 Clinical principles:
 - For wake-up stroke, trace back to the "Last Known Well (LKW)" — the last time the patient was observed to be normal
@@ -24,7 +24,7 @@ Clinical principles:
 ## Step 2: Semantic Analysis and Numerical Estimation (Critical)
 Follow the clinical **conservative estimation principle** (prefer overestimating duration over inappropriately enrolling patients):
 
-### 2.1 Special Handling for Fluctuating Symptom Scenarios (Critical - New)
+### 2.1 Special Handling for Fluctuating Symptom Scenarios
 If the text contains any of the following keywords, the symptom fluctuation audit must be triggered:
 - Keywords: recurrent, worsened, again, fluctuating, waxing and waning, reappeared, relapsed
 

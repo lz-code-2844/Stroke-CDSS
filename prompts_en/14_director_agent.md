@@ -31,7 +31,7 @@ A: Thrombolysis (IVT Only)
 B: Thrombectomy or Bridging Therapy (EVT +/- IVT)
 C: Conservative Management (Medical Management)
 D: Other Disease (specific diagnosis required)
-E: Arterial Dissection Special Management (Tip 8 - Added)
+E: Arterial Dissection Special Management
 
 # Inputs
 - Core Clinical History (Facts): {fact_content}
@@ -89,7 +89,7 @@ E: Arterial Dissection Special Management (Tip 8 - Added)
 **Only after completely excluding the above Category D conditions can you proceed to Step 0 time window determination.**
 
 ---
-## Step 0: Time Window Mandatory Determination (Highest Priority - Added)
+## Step 0: Time Window Determination
 
 **Core Principle**: Time window takes priority over benefit assessment. Before making any other determination, you must first establish the treatment pathway based on the time window.
 
@@ -252,7 +252,7 @@ Retrieve `indication_result`:
 - **Category D** = Non-acute ischemic stroke (primary intracranial hemorrhage, epilepsy, TIA, etc.)
 - **Category C** = Acute ischemic stroke + absolute contraindications (prior hemorrhage history, aneurysm, coagulopathy, etc.)
 
-## Step 1.1: Category D Priority Determination (Revised - Critical)
+## Step 1.1: Category D Priority Determination
 
 **Before making A/B/C treatment plan decisions, you must first determine whether the case belongs to Category D (Other Disease).**
 
@@ -298,7 +298,7 @@ If the following conditions are met, output D directly:
 }
 ```
 
-#### 2. Non-Stroke Disease Determination (Added - Critical)
+#### 2. Non-Stroke Disease Determination
 If the following conditions are met, output D:
 
 **2.1 Epileptic Seizure**:
@@ -350,9 +350,9 @@ If **all** the following conditions are met, output D:
 ## Step 1.5: Clinical-Imaging Alignment Audit
 - Symptom laterality verification: Extract chief complaints from fact_content (left brain controls right limbs, right brain controls left limbs).
 - Typical sign audit: Left brain occlusion - focus on checking for aphasia/dysarthria; Right brain occlusion - focus on checking for spatial neglect.
-- **Clinical Priority Principle**: When significant clinical-imaging mismatch exists (e.g., NIHSS>=6 + abnormal ASPECTS but CTA negative, or high NIHSS but only mild distal abnormality), clinical findings should take priority; highly suspect occult occlusion and lean toward aggressive treatment.
+- **Discrepancy Handling Principle**: When clinical presentation and imaging results do not align, document the conflict, assess the quality of each source, and preserve diagnostic uncertainty. Clinical severity or a perfusion abnormality does not by itself replace direct evidence of vessel occlusion.
 
-## Step 2: Thrombolysis Indication Priority Determination (Critical - Added)
+## Step 2: Thrombolysis Indication Determination
 **Core Principle: Thrombolysis is the foundational treatment for acute ischemic stroke and does not depend on the presence of LVO**
 
 Before conducting complex interventional target assessment, first determine basic thrombolysis indication:
@@ -362,7 +362,7 @@ Before conducting complex interventional target assessment, first determine basi
   - **It is strictly prohibited to downgrade to C (Conservative Management) due to "no LVO" or "no significant infarct core"**
   - Reason: Small vessel occlusion (M3/M4/perforators), microemboli can also cause moderate-to-severe symptoms with clear thrombolysis benefit
 
-## Step 2.5: A vs B Decision Boundary (Added - Critical)
+## Step 2.5: A vs B Decision Boundary
 
 **Core Question**: When to choose A (IVT only) vs B (Thrombectomy or Bridging)
 
@@ -371,7 +371,7 @@ Before conducting complex interventional target assessment, first determine basi
 **Choose A when any of the following conditions is met**:
 
 1. **No Definitive LVO**:
-   - CTA negative or only suspected occlusion
+   - CTA negative or the occlusion conclusion is uncertain
    - Imaging tool did not identify definitive occlusion
 
 2. **Distal M2 or M3 Occlusion + NIHSS<10**:
@@ -379,9 +379,9 @@ Before conducting complex interventional target assessment, first determine basi
    - Symptoms not severe enough
    - Thrombolysis may be more effective than thrombectomy
 
-3. **Imaging Tool Negative but Obvious Clinical Symptoms**:
-   - Thrombolyse first and observe
-   - As "diagnostic therapy"
+3. **No Definitive LVO but Eligible for IVT**:
+   - IVT eligibility does not depend on confirmation of LVO
+   - Base the decision on the time window, disabling symptoms, and contraindications
 
 4. **Advanced Age + Distal Vessel Occlusion**:
    - Age >80 years
@@ -397,20 +397,20 @@ Before conducting complex interventional target assessment, first determine basi
    - Onset <4.5h -> Bridging (A+B)
    - Onset 4.5-24h -> Thrombectomy only (B)
 
-2. **NIHSS>=10 + Suspected Large Vessel Occlusion**:
-   - High NIHSS suggests possible proximal occlusion
-   - Consider B (Thrombectomy or Bridging)
+2. **NIHSS>=10 + Uncertain Occlusion Conclusion**:
+   - High NIHSS may indicate proximal occlusion; promptly review the source images or obtain additional vascular imaging
+   - Select B (Thrombectomy or Bridging) only after an interventional target is confirmed
 
 ### Key Principles
 
 - **Distal M2/M3 + Early (<4.5h) -> Prioritize A, not B**
 - **Within time window + LVO -> Prioritize A+B (Bridging), not B alone**
-- **Suspected occlusion + Early -> Prioritize A, not B**
-- **Thrombolyse first then assess**: Early uncertain occlusion, thrombolyse first, rescue thrombectomy if ineffective
+- **Uncertain occlusion + Early -> If IVT-eligible, prioritize A and promptly reassess the vascular imaging**
+- **Treat and reassess in parallel**: For an early uncertain occlusion in an IVT-eligible patient, proceed with thrombolysis while reviewing the vascular imaging; consider rescue thrombectomy only after an interventional target is confirmed
 
 ## Step 3: Interventional Target and Clinical Match Audit (Core Logic)
 
-### 3.0.0 Bridging Therapy Priority Determination (Added - Highest Priority)
+### 3.0.0 Bridging Therapy Determination
 
 **Before making other treatment plan decisions, you must first determine whether bridging therapy conditions are met**
 
@@ -423,7 +423,7 @@ Before conducting complex interventional target assessment, first determine basi
    - OR Q1 <= 4.5 hours
 
 2. **Vessel Occlusion Determination**:
-   - lvo_agent determines "definitive occlusion" or "suspected occlusion"
+   - lvo_agent determines "definitive occlusion"
    - Occlusion location: ICA/M1/M2 (not including M3)
 
 3. **No Thrombolysis Contraindications**:
@@ -456,17 +456,17 @@ But reasoning must state "Recommend bridging therapy (intravenous thrombolysis f
 - Onset 3 hours + M1 occlusion -> Only recommend thrombectomy (B)
 - Onset 3 hours + M1 occlusion -> Recommend bridging (A+B, output as B but specify bridging)
 
-### 3.0 Stenosis vs Occlusion Decision Branching (Critical - Added)
+### 3.0 Stenosis vs Occlusion Decision Branching
 First determine the type of vascular lesion:
 - **Complete Occlusion**: Enter standard thrombectomy evaluation flow (Steps 2.1-2.4)
 - **Severe Stenosis (Not Complete Occlusion)**: Enter stenosis-specific decision tree (Step 2.0.1)
 - **Moderate or Less Stenosis**: Acute thrombectomy is generally not considered
 
-#### 3.0.1 Special Decision Rules for Severe Stenosis (Tip 2/3/13)
+#### 3.0.1 Decision Rules for Severe Stenosis
 - **Severe Stenosis + High NIHSS (>=6 points)**:
   - Clinical logic: High NIHSS suggests CTA may underestimate occlusion severity; actual occlusion may be complete
-  - Decision: Lean toward thrombectomy (treat as suspected occlusion)
-  - Reason: Severity of symptoms mismatched with stenosis, suspect thrombus burden is underestimated
+  - Decision: Mark the vascular status as uncertain and prioritize review of the source images or additional vascular imaging
+  - Reason: A mismatch between symptom severity and stenosis requires confirmation of an interventional target
 
 - **Severe Stenosis + Low NIHSS (<6 points)**:
   - Clinical logic: Mild symptoms, stenosis is the primary pathology
@@ -486,23 +486,20 @@ First determine the type of vascular lesion:
    - Interventional access: ICA, MCA (M1/M2/M3), BA, VA-V4.
    - Interventional limit: Anterior circulation thrombectomy upper limit is M3 segment; posterior circulation limited to BA / VA-V4.
 
-2. **Consistency Audit Priority (Critical Check)**:
-   - **First read** {consistency_check_result} to check for [Diagnostic Inconsistency Warning]
-   - If the consistency specialist issues a warning (e.g., "High NIHSS score + large perfusion deficit, but only determined as distal M2 occlusion, pathophysiologically mismatched"):
-     - Must re-examine the occlusion determination in imaging_consistency_result
-     - Prioritize suspicion of missed proximal large vessel occlusion (ICA/M1)
-     - If consistency warning is reasonable, note in final decision "Diagnostic uncertainty exists, recommend imaging review"
-   - If consistency specialist did not issue a warning, continue standard workflow
+2. **Consistency Audit**:
+   - Review {consistency_check_result} for discrepancies among clinical findings, CTA, and CTP.
+   - If a discrepancy exists, describe it in the final decision, explain its effect on confidence, and recommend imaging review or additional testing.
+   - The consistency audit prompts review but does not itself change the occlusion conclusion in imaging_consistency_result.
 
-3. Observation Priority Determination:
-   - Review visual finding descriptions in imaging_consistency_result item by item.
-   - If the imaging specialist determined occlusion based on definitive visual evidence (cutoff sign, contrast interruption) but cta_tool_raw shows normal or absent, must determine occlusion exists and document as "Imaging findings corrected tool false negative."
+3. Imaging Evidence Review:
+   - Compare the direct imaging signs in imaging_consistency_result with cta_tool_raw.
+   - When sources disagree, describe the discrepancy. Confirm occlusion only when traceable direct signs are present; otherwise preserve an "uncertain" conclusion and recommend further imaging evaluation.
 
 4. Clinical-Imaging Tiered Determination (Tiering & Disability Gate):
    - Tier 1 (LVO): ICA, M1, M2 trunk, BA, V4.
      - No absolute contraindication -> Primary option B.
    - Tier 2 (MeVO): Distal M2, M3, A1, A2.
-     - **Age-Vessel Location Interaction Determination (Tip 6 - Added)**:
+     - **Age-Vessel Location Interaction Determination**:
        - If patient age >80 years AND occlusion is distal (Distal M2/M3):
          - Prioritize A (Thrombolysis) over B (Thrombectomy)
          - Reason: Higher risk for distal thrombectomy in elderly patients, thrombolysis has better benefit-risk ratio
@@ -512,66 +509,17 @@ First determine the type of vascular lesion:
        - Only when disabling deficit exists (complete aphasia, severe hemiplegia, severe visual field defect, significant neglect) may B be selected.
        - If only non-disabling symptoms (mild dysarthria, mild hemiparesis, sensory changes) -> Strictly prohibited from selecting B as primary; switch to A or C.
 
-## Step 3.1: Upgrade Management for Suspected Occlusion (Added - Critical)
+## Step 3.1: Handling an Uncertain Occlusion Conclusion
 
-**When the LVO Agent determines "suspected occlusion" (vessel_occluded="Suspected"), upgrade assessment is required.**
+When the LVO Agent outputs vessel_occluded="Uncertain," do not automatically upgrade it to "Occlusion present."
 
-### Trigger Conditions
-If LVO determination in imaging_consistency_result is "suspected" or contains the following descriptions:
-- Sparse vessel opacification + delayed distal filling
-- Abrupt vessel tapering (rat-tail sign)
-- Severe stenosis (>70%) + distal perfusion abnormality
-- Severe clinical symptoms but only mild imaging abnormalities
+- Document the imaging signs, data conflicts, and image-quality limitations responsible for the uncertainty.
+- NIHSS severity, a perfusion deficit, or clinical-imaging mismatch may increase the urgency of review but cannot establish the occlusion site by itself.
+- If the patient remains within the IVT window and is otherwise eligible, follow the IVT pathway while promptly reviewing CTA or obtaining additional vascular imaging.
+- Enter B (Thrombectomy or Bridging) assessment only after review demonstrates direct evidence such as vessel cutoff, filling defect, or absent distal opacification.
+- If no interventional target is confirmed and the IVT window has passed, select C or further imaging evaluation according to the working diagnosis, time window, and risk assessment.
 
-### Upgrade Determination Criteria (Revised - More Strict)
-
-**Important Principle**: Suspected occlusion does not equal confirmed occlusion; upgrade requires sufficient evidence
-
-**All the following conditions must be simultaneously met to upgrade**:
-
-1. **NIHSS Score Requirement**:
-   - NIHSS >= 10 points (raised threshold, previously >=6)
-   - Reason: Higher NIHSS is needed to support the upgrade decision
-
-2. **Vessel Location Restriction**:
-   - Limited to ICA/M1/Proximal M2 (distal M2 and M3 are not upgraded)
-   - Reason: Suspected occlusion in distal vessels carries more risk than benefit
-
-3. **At least 2 of the following evidence criteria must be met**:
-   - Large perfusion deficit (Core>30ml or Hypoperfusion>50ml)
-   - Severe clinical-imaging mismatch (NIHSS>=10 but mild imaging)
-   - Definitive vessel signs (rat-tail sign, truncation sign, etc.)
-   - Consistency audit clearly suggests "possible occult proximal occlusion"
-
-4. **Time Window Requirement**:
-   - Onset <6 hours
-
-### Upgrade Decision Flow
-
-```
-Suspected occlusion
-  |
-  v
-Check upgrade conditions
-  +-- All conditions met -> Upgrade to "Occlusion present", consider B
-  +-- Not met -> Maintain "Suspected" status
-      +-- Within time window (<4.5h) -> A (Thrombolysis)
-      +-- Beyond time window -> C (Conservative)
-```
-
-### Decision Logic
-```
-Suspected occlusion + (High NIHSS OR Large perfusion deficit OR Clinical mismatch)
-  +-- Within time window -> B (Thrombectomy or Bridging)
-  +-- Beyond time window -> C (Conservative)
-```
-
-### Non-Upgrade Scenarios
-If suspected occlusion but upgrade conditions are not met:
-- NIHSS < 6 points AND No large perfusion deficit -> Choose A (Thrombolysis)
-- Beyond time window AND No definitive benefit evidence -> Choose C (Conservative)
-
-## Step 3.2: MeVO (Medium Vessel Occlusion) Special Management (Added - Critical)
+## Step 3.2: MeVO (Medium Vessel Occlusion) Assessment
 
 **MeVO Definition**: Occlusion of medium vessels such as distal M2, M3, A2, P2
 
@@ -621,7 +569,7 @@ Vessel location determination
 - **Cannot recommend thrombectomy based solely on large penumbra**: Perfusion mismatch is a reference, not a deciding factor
 - **Thrombectomy strictly prohibited for low NIHSS patients**: MeVO patients with NIHSS<6 have more risk than benefit
 
-## Step 3.5: Risk-Benefit Balance Assessment (Added - Important)
+## Step 3.5: Risk-Benefit Balance Assessment
 
 **Before making the final A/B/C decision, a risk assessment must be performed to prevent overly aggressive treatment.**
 
@@ -640,7 +588,7 @@ Vessel location determination
 #### 2. Beyond Time Window + No Definitive Occlusion
 **Conditions**:
 - Onset > 24 hours
-- vessel_occluded="No" or "Suspected"
+- vessel_occluded="No" or "Uncertain"
 
 **Risk**: Limited benefit, increased risk
 
@@ -684,7 +632,7 @@ If high-risk exists -> Consider downgrading treatment
 Final decision output
 ```
 
-## Step 3.6: Low NIHSS Patient Protection Mechanism (Added - Critical)
+## Step 3.6: Low NIHSS Patient Assessment
 
 **Trigger Condition**: NIHSS < 6 points
 
@@ -772,7 +720,7 @@ Prerequisite: Must meet the basic requirements of indication_result and have no 
            - Not within thrombolysis time window (>4.5h)
            - Core volume too large (Core > 70ml) or ASPECTS < 6
         4. Mild stroke determination: NIHSS <= 5 points with non-disabling mild symptoms; primary dual antiplatelet conservative therapy.
-        5. **TIA (Transient Ischemic Attack) Determination (Tip 11 - Added)**:
+        5. **TIA (Transient Ischemic Attack) Determination**:
            - Symptoms have completely resolved and duration <24 hours
            - No imaging evidence of acute infarction
            - Prioritize medical management (antiplatelet + statin + risk factor control)
@@ -791,7 +739,7 @@ Prerequisite: Must meet the basic requirements of indication_result and have no 
         - Classifying stroke patients with contraindications as D (should classify as C)
 * D (Other Disease):
     * Imaging confirms intracranial hemorrhage (intraparenchymal hemorrhage, subarachnoid hemorrhage, subdural or epidural hematoma) or other non-ischemic stroke diseases.
-* E (Arterial Dissection Special Management - Tip 8 Added):
+* E (Arterial Dissection Special Management):
     * Trigger condition: CTA clearly shows arterial dissection (double lumen sign, intimal flap)
     * Management principles:
         - Anticoagulation therapy as primary treatment (unless hemorrhage contraindicated)
@@ -806,7 +754,7 @@ Prerequisite: Must meet the basic requirements of indication_result and have no 
     * Trigger conditions:
       1. No improvement in neurological deficit symptoms during or after intravenous thrombolysis
       2. Review imaging reveals Tier 1/2 interventional access target
-      3. **Thrombectomy Necessity Assessment for Thrombolysed Patients (Tip 6 - Added)**:
+      3. **Thrombectomy Necessity Assessment for Thrombolysed Patients**:
          - If large vessel occlusion evidence exists, bridging therapy prognosis is better than thrombolysis alone
          - However, if elderly + distal MeVO, thrombectomy risk still requires cautious assessment
 * If primary plan C (Conservative Management): Secondary plan B (Delayed Thrombectomy Assessment).
@@ -822,7 +770,7 @@ Prerequisite: Must meet the basic requirements of indication_result and have no 
   "step_2_ivt_eligibility_check": "Thrombolysis indication determination (based on indication_result Q3 and time window)",
   "step_3_audit_results": {
     "vessel_pathology_type": "Complete occlusion/Severe stenosis/Moderate stenosis/Mild stenosis/Normal",
-    "stenosis_occlusion_decision": "If stenosis, explain decision logic based on Tip 2/3/13",
+    "stenosis_occlusion_decision": "If stenosis, explain the decision logic used",
     "vessel_anatomy_check": "Whether vessel location qualifies for interventional access (clearly note PCA / M3 status)",
     "clinical_imaging_alignment": "Whether symptom laterality matches imaging occlusion location",
     "vessel_tier_status": "Tier 1 / Tier 2 / None / PCA(Non-EVT) / Stenosis-Only",
@@ -859,7 +807,7 @@ Output the final decision report.
     "arterial_dissection_note": "If E is selected, explain dissection management plan",
     "secondary_option_code": "A/B/C/D/E/None",
     "secondary_plan_description": "Trigger conditions and rescue measures for secondary plan",
-    "reasoning": "Core rationale (reflecting imaging correction, PCA exclusion explanation, contraindication review, clinical symptom alignment)"
+    "reasoning": "Core rationale (describing imaging evidence, data consistency, contraindication review, and clinical symptom alignment)"
   },
   "final_decision": {
     "ivt": {

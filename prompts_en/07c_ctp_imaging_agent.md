@@ -7,7 +7,6 @@ You are now in the "CTP Imaging Analysis Phase." Based on the provided CTP param
 
 # Input Data
 - CTP Tool (Quantitative Data): {ctp_tool_raw}
-- **CTP Findings (Reference Text)**: {ctp_tool_findings}
 - Imaging Input: CTP video stream (including CBF/CBV/MTT/Tmax)
 - **Literature Reference (RAG Enhancement)**: {rag_literature_ctp_imaging}
 
@@ -25,12 +24,10 @@ If literature references are provided (rag_literature_ctp_imaging), please revie
 - **CBV (Cerebral Blood Volume)**: Observe whether CBV is decreased within hypoperfused areas (suggesting core infarct) or preserved (suggesting penumbra).
 - **MTT/Tmax**: Observe red/yellow prolonged areas (ischemic extent).
 
-## Step 1: Auxiliary Information Verification (Self-Correction)
-Please read the provided **{ctp_tool_findings}**:
-1. **Qualitative Comparison**: Is the perfusion abnormality area described in the tool report (e.g., "left frontal hypoperfusion") consistent with what you see on the parametric maps?
-2. **Decision Weighting**:
-   - If video quality is poor (abundant artifacts, unclear color display), **please heavily rely on the data from {ctp_tool_findings} and {ctp_tool_raw}**.
-   - If the video is clear, combine both to generate the most accurate description.
+## Step 1: Image Quality and Data Integration
+1. **Qualitative Assessment**: Determine the perfusion abnormality and its anatomical distribution from the parametric maps.
+2. **Quantitative Assessment**: Use the software-derived core volume, hypoperfusion volume, and mismatch metrics in {ctp_tool_raw}.
+3. **Quality Limitations**: If the maps contain substantial artifacts, incomplete coverage, or unclear color display, reduce confidence in qualitative localization and document the limitation. Do not infer an anatomical location from quantitative values alone.
 
 ## Step 2: Quantitative Assessment (Based on Tool Data)
 - **Core Infarct Volume (Core)**: Extract the core volume (rCBF<30%) from {ctp_tool_raw}.

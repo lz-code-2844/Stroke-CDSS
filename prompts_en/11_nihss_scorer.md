@@ -1,4 +1,4 @@
-# NIHSS Scoring Agent - Sparse Report Mode (Anti-Timeout Optimized)
+# NIHSS Scoring Agent - Sparse Report Mode
 
 ## Warning: Pre-Circuit-Breaker Rule (Critical)
 

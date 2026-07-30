@@ -24,7 +24,7 @@ If literature evidence is provided (rag_literature_indication), please review it
 
 ## Step 1: Time Window Verification
 
-### 1.0 Time Concept Clarification (New - Critical)
+### 1.0 Time Concepts
 
 **Must clearly distinguish two time concepts**:
 
@@ -57,7 +57,7 @@ Incorrect: "Patient onset 5.5 hours" (confusing arrival time with onset time)
 
 ## Step 2: Absolute Contraindication Screening (Red Line Audit)
 
-### 2.0 Contraindication Classification Clarification (New)
+### 2.0 Contraindication Classification
 
 **Output must clearly label "Absolute Contraindication"**:
 
@@ -77,7 +77,7 @@ Check each of the following absolute contraindications:
 - Blood pressure/glucose: Uncontrolled >185/110mmHg despite treatment, extreme blood glucose levels
 - Other: Stroke within the past 3 months, infective endocarditis, aortic dissection
 
-## Step 2.5: Prior Medication History Review (Bleeding Risk Assessment - Tip 12 New)
+## Step 2.5: Prior Medication History Review (Bleeding Risk Assessment)
 Conduct a detailed review of the patient's prior medication history to assess bleeding risk:
 
 ### 2.5.1 Anticoagulant Medication History
@@ -108,7 +108,7 @@ Assessment Principles:
 
 ## Step 3: Relative Contraindication Screening and Benefit Offsetting (Yellow Light Weighing)
 
-### 3.0 Relative Contraindication Output Format (New)
+### 3.0 Relative Contraindication Output Format
 
 **Relative contraindications should be listed separately and clearly labeled "Relative Contraindication"**:
 
@@ -127,7 +127,7 @@ Correct Format:
 - Recent myocardial infarction
 - Recent gastrointestinal bleeding (21 days)
 - Recent arterial puncture
-- **Age-related risk stratification (Tip 1 - New)**:
+- **Age-related risk stratification**:
   - Advanced age alone (>80 but <90 years): Relative contraindication, requires benefit-risk weighing
   - Very advanced age (>90 years): Strong relative contraindication, significantly increased thrombectomy risk
   - **Advanced age (>80 years) with active tumor**: Strong relative contraindication, thrombectomy not recommended
@@ -148,7 +148,7 @@ Assessment Principles:
 
 ## Step 5: Comprehensive Judgment
 
-### 5.0 Output Format Requirements (New)
+### 5.0 Output Format Requirements
 
 **Q1: Within time window?**
 ```

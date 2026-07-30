@@ -9,7 +9,7 @@
 
 Stroke-CDSS is a research implementation of an MDT-inspired multi-agent framework for acute ischemic stroke (AIS) treatment decision support. It integrates clinical records, multimodal CT imaging, specialist-style task decomposition, cross-checking, and retrieval-augmented reasoning to generate traceable recommendations for IVT, EVT, medical management, and non-AIS/hemorrhage pathways.
 
-This repository accompanies the paper **"A Multi-Agent MLLM Framework for Imaging-Grounded Treatment Recommendation in Acute Ischemic Stroke"**.
+This repository accompanies the peer-reviewed article **["A Multi-Agent MLLM Framework for Imaging-Grounded Treatment Recommendation in Acute Ischemic Stroke"](https://doi.org/10.1038/s41746-026-03066-7)**, published online in *npj Digital Medicine* on July 29, 2026.
 
 ---
 
@@ -192,12 +192,16 @@ agent/
 ## Citation
 
 ```bibtex
-@article{stroke_cdss_2025,
+@article{Yan_2026,
   title = {A Multi-Agent MLLM Framework for Imaging-Grounded Treatment Recommendation in Acute Ischemic Stroke},
-  author = {},
-  journal = {},
-  year = {2025},
-  url = {https://github.com/lz-code-2844/Stroke-CDSS}
+  author = {Yan, Bicong and Li, Zhuo and Fan, Yanfeng and Li, Ying and Chen, Li and Song, Xinyu and Tang, Yixiao and Shen, Li and Zhang, Ruipeng and Li, Yuehua},
+  journal = {npj Digital Medicine},
+  publisher = {Springer Science and Business Media LLC},
+  year = {2026},
+  month = {July},
+  issn = {2398-6352},
+  doi = {10.1038/s41746-026-03066-7},
+  url = {https://doi.org/10.1038/s41746-026-03066-7}
 }
 ```
 

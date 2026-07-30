@@ -9,7 +9,7 @@
 
 Stroke-CDSS 是一个面向急性缺血性卒中（AIS）治疗决策支持的研究型实现。系统模拟多学科团队（MDT）协作流程，整合临床病历、多模态 CT 影像、任务分解、交叉核验和检索增强推理，为静脉溶栓、血管内取栓、内科治疗以及非 AIS/出血路径生成可追溯的治疗推荐。
 
-本仓库对应论文 **"A Multi-Agent MLLM Framework for Imaging-Grounded Treatment Recommendation in Acute Ischemic Stroke"**。
+本仓库对应已通过同行评审的正式论文 **[《A Multi-Agent MLLM Framework for Imaging-Grounded Treatment Recommendation in Acute Ischemic Stroke》](https://doi.org/10.1038/s41746-026-03066-7)**。论文已于 2026 年 7 月 29 日在 *npj Digital Medicine* 在线发表。
 
 ---
 
@@ -192,12 +192,16 @@ agent/
 ## 引用
 
 ```bibtex
-@article{stroke_cdss_2025,
+@article{Yan_2026,
   title = {A Multi-Agent MLLM Framework for Imaging-Grounded Treatment Recommendation in Acute Ischemic Stroke},
-  author = {},
-  journal = {},
-  year = {2025},
-  url = {https://github.com/lz-code-2844/Stroke-CDSS}
+  author = {Yan, Bicong and Li, Zhuo and Fan, Yanfeng and Li, Ying and Chen, Li and Song, Xinyu and Tang, Yixiao and Shen, Li and Zhang, Ruipeng and Li, Yuehua},
+  journal = {npj Digital Medicine},
+  publisher = {Springer Science and Business Media LLC},
+  year = {2026},
+  month = {July},
+  issn = {2398-6352},
+  doi = {10.1038/s41746-026-03066-7},
+  url = {https://doi.org/10.1038/s41746-026-03066-7}
 }
 ```
 

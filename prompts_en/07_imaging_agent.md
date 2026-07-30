@@ -53,6 +53,7 @@ Extract key information from {cta_result}:
 - **Vessel localization**: Synthesize Agent description and Tool analysis to determine the specific occluded vessel segment
 - **Stenosis vs. occlusion**: Clearly distinguish between them, noting uncertainty when necessary
 - **Collateral circulation**: If described by the Agent, include in the comprehensive assessment
+- **Evidence traceability**: Each integrated conclusion must be traceable to a corresponding Agent or structured tool output. When sources conflict, preserve uncertainty and explain the discrepancy; do not introduce diagnostic information unsupported by the available evidence.
 
 ## Step 3: CTP Result Integration
 
@@ -200,6 +201,7 @@ Check whether the imaging comprehensive analysis is reasonable, whether conclusi
 4. **Data source clarity**:
    - Is the basis for each conclusion clear (which Agent or Tool it comes from)?
    - When data from different sources conflict, is the resolution approach explained?
+   - Does the result introduce any new diagnosis that cannot be traced to the supplied evidence? If so, FAIL.
 
 # Decision Logic
 ```

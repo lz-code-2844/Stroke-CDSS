@@ -24,10 +24,6 @@ EXCEL_COL_MAPPING = {
     "ctp_tool_raw": "ctp_tool",
     "cta_tool_raw": "cta_tool",
     
-    # --- Exam Findings Text ---
-    "cta_tool_findings": "cta_findings",
-    "ctp_tool_findings": "ctp_findings",
-    
     # --- Auxiliary Time Source ---
     "time_calc_source": "chief_complaint_info",
 

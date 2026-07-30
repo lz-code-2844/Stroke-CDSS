@@ -7,7 +7,6 @@ You are now in the "CTA Imaging Analysis Phase." Based on the provided CTA video
 
 # Input Data
 - CTA Tool (Automated Measurement Data): {cta_tool_raw}
-- Findings Reference Text: {cta_tool_findings}
 - CTP Abnormality Clues (Important Prior Information): {ctp_feedback}
 - Imaging Input: CTA video stream (implicitly included)
 - **Literature Reference (RAG Enhancement)**: {rag_literature_cta_imaging}
@@ -20,7 +19,7 @@ If literature references are provided (rag_literature_cta_imaging), please revie
 - Learn from occult occlusion identification cases in the literature
 
 ## Step 0: Imaging Video Description (Visual First - Prioritize Visual Observation)
-Important Instruction: Because automated measurement tools (cta_tool_raw) carry a risk of missed detection, you must first describe based on your visual observation of the video.
+First evaluate vessel continuity, luminal opacification, filling defects, and distal flow on the CTA video, and document the direct imaging signs supporting the assessment.
 
 - Observation Focus:
   - Tier 1 (LVO): ICA, M1, M2 main trunk, BA, V4. Focus on finding "stump sign," vessel cutoff, and filling defects.
@@ -46,13 +45,12 @@ This is an important auxiliary step. Please carefully read {ctp_feedback}.
   - **CTP-CTA Mismatch Handling**:
     - If CTP shows large-area ischemia but CTA visual observation is normal, explicitly state this discrepancy in the report and recommend that clinical management consider additional investigations for comprehensive judgment
 
-## Step 1: Auxiliary Information Verification and Tool Correction (Self-Correction)
-Please read cta_tool_raw and cta_tool_findings:
+## Step 1: Integration of Automated Analysis
+Use cta_tool_raw as auxiliary localization and quantitative information and compare it with the direct imaging signs:
 
-- Conflict Handling (Critical):
-  - If visual observation detects an occlusion (especially Tier 2 MeVO), but the tool reports negative, it must be judged as positive
-  - Explain the reason for tool missed detection (small vessel caliber, noise interference, threshold limitations)
-- It is strictly prohibited to overturn visual evidence based on a negative tool result
+- When the sources agree, integrate them into the occlusion or stenosis assessment.
+- When they disagree, describe the discrepancy, assess image quality, and conclude "present," "not identified," or "uncertain" according to the available evidence.
+- When evidence is insufficient, preserve uncertainty and recommend review of the source images or additional vascular imaging.
 
 ## Step 2: Stenosis and Plaque Assessment (Critical - Must Differentiate Stenosis vs. Occlusion)
 ### 2.1 Stenosis Severity Grading
@@ -73,7 +71,7 @@ Please read cta_tool_raw and cta_tool_findings:
 ## Step 3: Other Vascular Lesions
 - Aneurysm: Focal saccular outpouching
 - AVM: Abnormal vascular nidus
-- **Arterial Dissection (Tip 8 - New Addition)**:
+- **Arterial Dissection**:
   - Imaging Features: Double lumen sign, intimal flap, false lumen, irregular luminal narrowing
   - Common Locations: Internal carotid artery, vertebral artery
   - Clinical Significance: Requires special management, different from conventional occlusion
@@ -84,7 +82,7 @@ Please read cta_tool_raw and cta_tool_findings:
 {
   "step_0_video_description": "Detailed anatomical description based on visual observation; must indicate vascular tier level",
   "step_1_lvo_screening": {
-    "lvo_detected": "Yes/No",
+    "lvo_detected": "Yes/No/Uncertain",
     "occlusion_site": "Vessel and specific segment",
     "occlusion_tier": "Tier 1 / Tier 2 / None",
     "cutoff_sign": "Describe the cutoff features observed visually (e.g., abrupt cutoff, tapered narrowing, contrast interruption)"
@@ -128,13 +126,14 @@ Based on the analysis from the previous step, generate a structured CTA examinat
 - Examination: Head / Neck CTA
 - Core Requirement: Must clearly state whether vascular occlusion is present
 
-Visual Findings Take Priority:
-- The report must be based on the visual observations from the Reasoning phase
-- If visual findings indicate occlusion but the tool is negative, the report should explain this discrepancy (wording can be flexible, e.g., "tool did not detect," "automated analysis negative but visually apparent," etc.)
+Evidence Integration:
+- The report should be based on the direct imaging signs documented during the Reasoning phase and should incorporate the automated analysis data.
+- When sources disagree, describe the discrepancy, image quality, and confidence of the conclusion.
 
 Reject Ambiguous Language:
 - If lvo_detected=Yes, the conclusion must use "occlusion present / occlusion visible / definite occlusion"
-- It is strictly prohibited to use terms such as "suspected / possible / recommend further investigation"
+- For a positive lvo_detected=Yes conclusion, do not use uncertain terms such as "suspected" or "possible"
+- If lvo_detected=Uncertain, describe the evidence limitation and recommended method of review
 
 Mandatory Negative Statements:
 - The findings must explicitly state:
@@ -201,14 +200,12 @@ Report: {act_result}
    - If missing from conclusions but also not mentioned in findings → PASS (considered implicit exclusion)
    - If findings mention aneurysm/AVM but conclusions do not summarize → FAIL
 
-5. **Tool Data Discrepancy Explanation** (Relaxed Requirement):
-   - If Reasoning mentions "visual observation inconsistent with tool data," the Report should reflect an explanation of this discrepancy
-   - **No longer requires exact matching of specific phrasing** (e.g., "automated measurement tool has missed detection")
-   - As long as the Report reflects some explanation of the tool discrepancy (e.g., "tool missed detection," "measurement data negative but visually apparent," "automated analysis did not detect," etc.) → PASS
-   - If discrepancy is not mentioned at all → PASS (not mandatory)
+5. **Data Discrepancy Explanation**:
+   - If Reasoning identifies disagreement between direct imaging signs and automated analysis, the Report should describe the discrepancy and its effect on confidence.
+   - If evidence is insufficient, an "uncertain" conclusion with a recommendation for review is acceptable.
 
 6. **Terminological Rigor**:
-   - If ambiguous terms such as "suspected," "possible," or "recommend further investigation" appear in positive conclusions → FAIL
+   - If uncertain terms such as "suspected" or "possible" appear in an lvo_detected=Yes conclusion → FAIL
    - Allow the use of commonly accepted medical expressions such as "consider," "consistent with," "suggestive of" → PASS
 
 # Decision Logic

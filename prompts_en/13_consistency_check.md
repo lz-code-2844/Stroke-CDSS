@@ -36,8 +36,8 @@ Combine {neuro_exam} with {admission_record}:
 ## Step 2.5: Cross-Dimensional Pathophysiological Audit
 Perform a logical cross-check between "severity of neurological deficit" and "level of occluded vessel":
 - **Logical Baseline**: Severe neurological deficits (e.g., NIHSS > 10) or large perfusion abnormalities (e.g., > 30ml) are typically caused by trunk or proximal large vessel occlusion.
-- **Conflict Detection**: If CTP shows a large ischemic area but CTA only identifies "distal small branch occlusion" or "no occlusion," this is pathophysiologically implausible.
-- **Directive**: If such a logical disconnect is found, the report must issue a [Diagnostic Inconsistency Warning], questioning the current LVO determination and requesting re-review of the original imaging to prevent missing an occult trunk thrombus.
+- **Conflict Detection**: If CTP shows a large ischemic area but CTA identifies only a "distal small branch occlusion" or "no occlusion," record a cross-modal discrepancy.
+- **Handling Principle**: List the discrepancy and possible explanations, including image quality, acquisition timing, collateral circulation, distal occlusion, or perfusion artifact, and recommend review of the source images or additional testing. The consistency check does not itself change the original imaging conclusion.
 
 ## Step 3: EVT Imaging Suitability
 - Whether large irreversible damage exists (low ASPECTS score / excessively large core)

@@ -1,4 +1,4 @@
-# NIHSS 评分 Agent - 稀疏报告模式 (Anti-Timeout Optimized)
+# NIHSS 评分 Agent - 稀疏报告模式
 
 ## ⚠️ 前置熔断规则（Critical）
 

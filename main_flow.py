@@ -263,7 +263,6 @@ def build_agent_context(row_data, agent_name, previous_outputs=None):
     # === Branch B: Ischemic Pathway ===
     elif agent_name == 'lvo':
         ctx['cta_tool_raw'] = row_data.get('cta_tool_raw', 'N/A')
-        ctx['cta_tool_findings'] = row_data.get('cta_tool_findings', 'No record available')
         ctx['cta_imaging_output'] = previous_outputs.get('cta_imaging', 'CTA imaging analysis not executed or failed')
         ctx['admission_record'] = full_record
         
@@ -272,12 +271,10 @@ def build_agent_context(row_data, agent_name, previous_outputs=None):
         
     elif agent_name == 'cta_imaging':
         ctx['cta_tool_raw'] = row_data.get('cta_tool_raw', 'N/A')
-        ctx['cta_tool_findings'] = row_data.get('cta_tool_findings', 'No record available')
         ctx['ctp_feedback'] = previous_outputs.get('ctp_imaging', 'CTP not executed or no result')
         
     elif agent_name == 'ctp_imaging':
         ctx['ctp_tool_raw'] = row_data.get('ctp_tool_raw', 'N/A')
-        ctx['ctp_tool_findings'] = row_data.get('ctp_tool_findings', 'No record available')
 
     # === Imaging Integration Agent: Merge 07a/07b/07c conclusions ===
     elif agent_name == 'imaging_validation':
